@@ -1,6 +1,6 @@
 import { YStack, H2, Separator, Theme } from 'tamagui';
 
-import { EditScreenInfo } from './EditScreenInfo';
+import { EditScreenInfo } from './EditScreenInfo-not';
 
 type ScreenContentProps = {
   title: string;
