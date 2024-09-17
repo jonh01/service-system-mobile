@@ -3,12 +3,15 @@ import { useEffect, useState } from 'react';
 import { Button, Form, H1, Image, Spinner } from 'tamagui';
 
 import { Label } from '../components/label';
+import { signIn } from '../redux/authSlice';
 import { SignUpAPI } from '../services/ServicesAPI';
+import { useAppDispatch } from '../types/reduxHooks';
 import { formatCPF, formatPhone } from '../utils/formatters';
 
 import { Container } from '~/app/components/Container';
 
 export default function SignUp() {
+  const dispatch = useAppDispatch();
   const { name, email, picture, googlePhone, googleToken } = useLocalSearchParams<{
     googleToken: string;
     name: string;
@@ -37,6 +40,7 @@ export default function SignUp() {
         googleToken
       )
         .then((response) => {
+          dispatch(signIn({ user: response.data, googleToken }));
           console.log('criei a conta: ' + googleToken + ' \n resposta: ' + response.data);
         })
         .catch((response) => {

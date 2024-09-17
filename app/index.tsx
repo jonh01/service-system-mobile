@@ -6,6 +6,7 @@ import { InitialScreen } from './components/InitialScreen';
 import { useAppSelector } from './types/reduxHooks';
 
 export default function App() {
+
   const signed = useAppSelector((state) => state.auth.signed);
   const [loadingGoogle, setLoadingGoogle] = useState<boolean>(true);
   const [user, setUser] = useState<FirebaseAuthTypes.User | null>(null);
@@ -24,9 +25,8 @@ export default function App() {
     return <InitialScreen />;
   }
 
-  return user != null && signed ? (
+  return user != null && signed ?
     <Redirect href="/(tabs-app)" />
-  ) : (
-    <Redirect href="/(stack-auth)" />
-  );
+  :
+    <Redirect href="/(stack-auth)" />;
 }
