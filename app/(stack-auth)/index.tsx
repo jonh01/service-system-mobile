@@ -1,16 +1,49 @@
-import { Link, useLocalSearchParams, useRouter } from 'expo-router';
+import { GoogleSigninButton } from '@react-native-google-signin/google-signin';
+import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Image, H1, Button } from 'tamagui';
+import { Image, H1, Progress } from 'tamagui';
 
 import { Container } from '../components/Container';
-import { findAllCategory, RefreshTokenAPI, SignInAPI, SignOutAPI } from '../services/ServicesAPI';
+import { SignIn as signInFirebase } from '../services/FireBaseAuth';
+import { SignInAPI } from '../services/ServicesAPI';
+import { useAppDispatch } from '../types/reduxHooks';
+import { CustomDialog } from '../components/Spinner';
 
 export default function Home() {
   const router = useRouter();
-  const [name, setName] = useState<string>('jhony');
-  const [email, setEmail] = useState<string>('jhony@email.com');
+  const dispatch = useAppDispatch();
+  const [loading, setLoading] = useState(false);
+
+  const handleSignIn = async () => {
+    setLoading(true);
+    signInFirebase()
+      .then((response) => {
+        SignInAPI(response.idToken!)
+          .then((responseSuccess) => {
+            setLoading(false);
+            // dispatch(signInRedux({ user: response.data }));
+            console.log(response.idToken! + '\n\n' + responseSuccess.data);
+          })
+          .catch((responseError) => {
+            setLoading(false);
+            const phone = response.userAuth.user.phoneNumber?.length
+              ? response.userAuth.user.phoneNumber
+              : '';
+            responseError.message.includes('404')
+              ? router.push(
+                  `/(stack-auth)/signup?googleToken=${response.idToken!}&name=${response.userAuth.user.displayName}&email=${response.userAuth.user.email}&picture=${response.userAuth.user.photoURL}&googlePhone=${phone}`
+                )
+              : console.log('Erro ao fazer login: ' + responseError.message);
+          });
+      })
+      .catch((error) => {
+        console.log('error: ', error);
+        setLoading(false);
+      });
+  };
+
   return (
-    <Container ai="center" jc="center">
+    <Container ai="center" jc="flex-end">
       <H1
         fontWeight="700"
         fontStyle="italic"
@@ -21,80 +54,19 @@ export default function Home() {
       <Image
         source={{
           uri: require('../../assets/logo.png'),
-          width: 250,
-          height: 250,
+          width: 300,
+          height: 300,
         }}
       />
-      <Button
-        onPress={() => {
-          router.push(`/(stack-auth)/signup?name=${name}&email=${email}`);
-        }}>
-        Show Sign Up
-      </Button>
-      <Button
-        onPress={() => {
-          SignInAPI('123456')
-            .then((response) => {
-              console.log('Deu certo! \n\n');
-              console.log(response.data);
-              console.log('\n\n');
-              console.log(response.headers);
-            })
-            .catch((response) => {
-              console.log(response);
-            });
-        }}>
-        Sign In
-      </Button>
-      <Button
-        onPress={() => {
-          SignOutAPI()
-            .then((response) => {
-              console.log('Deu certo! \n\n');
-              console.log(response.data);
-              console.log('\n\n');
-              console.log(response.headers);
-            })
-            .catch((response) => {
-              console.log(response);
-            });
-        }}>
-        Logoff
-      </Button>
-      <Button
-        onPress={() => {
-          RefreshTokenAPI()
-            .then((response) => {
-              console.log('Deu certo! \n\n');
-              console.log(response);
-              console.log('\n\n');
-              console.log(response.headers);
-            })
-            .catch((response) => {
-              console.log(response);
-            });
-        }}>
-        Refresh Token
-      </Button>
-      <Button
-        onPress={() => {
-          findAllCategory({
-            page: 0,
-            size: 5,
-            sort: [{ orderBy: 'id', direction: 'asc' }],
-          })
-            .then((response) => {
-              console.log('Deu certo! \n\n');
-              console.log(response.data);
-              console.log('\n\n');
-              console.log(response.headers);
-            })
-            .catch((response) => {
-              console.log(response);
-            });
-        }}>
-        Recuperar Dado
-      </Button>
+      <GoogleSigninButton
+        size={GoogleSigninButton.Size.Wide}
+        color={GoogleSigninButton.Color.Light}
+        style={{marginTop:160, marginBottom: 60}}
+        onPress={() => handleSignIn()}
+      />
+      <Progress value={undefined}>
+          <Progress.Indicator animation="bouncy" />
+      </Progress>
     </Container>
   );
 }

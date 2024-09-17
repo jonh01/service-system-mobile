@@ -1,10 +1,32 @@
+import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
 import { Redirect } from 'expo-router';
+import { useEffect, useState } from 'react';
+
+import { InitialScreen } from './components/InitialScreen';
+import { useAppSelector } from './types/reduxHooks';
 
 export default function App() {
-  const isLogged = true;
+  const signed = useAppSelector((state) => state.auth.signed);
+  const [loadingGoogle, setLoadingGoogle] = useState<boolean>(true);
+  const [user, setUser] = useState<FirebaseAuthTypes.User | null>(null);
 
-  if (!isLogged) return <Redirect href="/(stack-auth)" />;
+  useEffect(() => {
+    auth().onAuthStateChanged((userState) => {
+      setUser(userState);
 
-  return <Redirect href="/(tabs-app)" />;
+      if (loadingGoogle) {
+        setLoadingGoogle(false);
+      }
+    });
+  }, []);
 
+  if (loadingGoogle) {
+    return <InitialScreen />;
+  }
+
+  return user != null && signed ? (
+    <Redirect href="/(tabs-app)" />
+  ) : (
+    <Redirect href="/(stack-auth)" />
+  );
 }

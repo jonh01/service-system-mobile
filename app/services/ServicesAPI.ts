@@ -1,5 +1,7 @@
 import axios from 'axios';
 
+import { SignOut } from './FireBaseAuth';
+import { persistor } from '../redux/store';
 import { OrderInsert, OrderUpdate } from '../types/order';
 import { PageRequest } from '../types/page';
 import { RatingInsert, RatingUpdate } from '../types/rating';
@@ -8,7 +10,69 @@ import { UserInsert, UserUpdate } from '../types/user';
 
 const axiosInstance = axios.create({ baseURL: process.env.EXPO_PUBLIC_URL_SERVICE_API });
 
-// definir os cookies
+// definir refresh
+let isRefreshing = false;
+
+axiosInstance.interceptors.response.use(
+  (response) => {
+    return response; // Se a resposta estiver ok, retorna diretamente
+  },
+  async (error) => {
+    const status: number = error.response ? error.response.status : null;
+    const googleToken =
+      'eyJhbGciOiJSUzI1NiIsImtpZCI6ImIyNjIwZDVlN2YxMzJiNTJhZmU4ODc1Y2RmMzc3NmMwNjQyNDlkMDQiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJhenAiOiI1MzUyMDM2MjEyMDQtaTFobzQydXR0MW9qNGplZnE5ajVhNGIzZDhzc2k5YzIuYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20iLCJhdWQiOiI1MzUyMDM2MjEyMDQtYjVmOWxncTRncjZobTFmcmdxdTZpNGQxZnI4MHJwYmwuYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20iLCJzdWIiOiIxMDM3MjY2MTI0MDI5ODkyNzk5MzMiLCJlbWFpbCI6ImpvbmhqaG91QGdtYWlsLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJuYW1lIjoiSm9uaCBKaG91IiwicGljdHVyZSI6Imh0dHBzOi8vbGgzLmdvb2dsZXVzZXJjb250ZW50LmNvbS9hL0FDZzhvY0txQ2VoWWpsVWVlLWtXRkc0elpvdnhYUGVwS1o0eWtnVEJVSV90NUs1V255QXdwQT1zOTYtYyIsImdpdmVuX25hbWUiOiJKb25oIiwiZmFtaWx5X25hbWUiOiJKaG91IiwiaWF0IjoxNzI2NTI5OTQ0LCJleHAiOjE3MjY1MzM1NDR9.Ve0asTP9oEsULnUwpBH2sPUuOQZNQD_zqDvXhccfGvFlBcz5xiEpCH2deDad-vfbe9uUl4quKaCKcPbEgw-hODt13slLRFZXwNBxmuwiND8TSnZ6RKHNPMbhPmE72qEzvz1UCX9FGr_7pnkP_6cATb7hXVAu_BDezfDpzuF6xquVBdpdT2kVE_ppo57R6izQM71IASahaIXva89pG12WR3FWR-W1-uxdVBAS_v5BbthlwVdEp6CuZ1N_fAJw9bgvmK_gbaLhxjYNPS0uTmgnHxggTopqPOSOvsdrQdEGeq4ZvrGDUBCzJTspd_2-ROfWVdNMzUGz-jseuffc7ecWAw';
+
+    console.log('log erro 1: ' + status + ' refresh: ' + isRefreshing);
+    if (status === 401 || status === 403) {
+      const originalRequest = error.config;
+
+      // Verifica se já estamos atualizando o token
+      if (!isRefreshing) {
+        console.log('log erro 2: ' + status + ' refresh: ' + isRefreshing);
+        isRefreshing = true;
+        try {
+          // Atualiza o token
+          const response = await RefreshTokenAPI();
+
+          // Reenvia a requisição original com o novo token
+          if (response.status === 200) {
+            const responseRefresh = await axiosInstance(originalRequest);
+            return responseRefresh;
+          }
+        } catch (refreshError) {
+          console.log('log erro 3: ' + status + ' refresh: ' + isRefreshing);
+          // Se o refresh falhar, desloga o usuário
+          const loginResponse = await SignInAPI(googleToken);
+
+          if (loginResponse.status === 200) {
+            console.log('signIn: ' + loginResponse.data);
+            const responseRefresh = await axiosInstance(originalRequest);
+            return responseRefresh;
+          } else return Promise.reject(refreshError);
+        } finally {
+          // Reseta o estado de refresh para permitir novas atualizações no futuro
+          isRefreshing = false;
+        }
+      } else if (status === 403 && isRefreshing) {
+        // sair porque o google token é inválido
+        console.log('log erro 4: ' + status + ' refresh: ' + isRefreshing);
+        SignOut()
+          .then(() => {
+            console.log('SignOut with Google!');
+            persistor.purge().catch((error) => {
+              console.log('error delete AsyncStorage: ', error);
+            });
+          })
+          .catch((error) => {
+            console.log('error signOut: ', error);
+          });
+      }
+    }
+    console.log('log erro 5: ' + status + ' refresh: ' + isRefreshing);
+    return Promise.reject(error); // Propaga o erro para outras situações
+  }
+);
+
 // Definir pageble
 
 const PageDefine = (pageble: PageRequest) => {
@@ -57,7 +121,6 @@ export const findAllCategory = async (pageble?: PageRequest) => {
   if (pageble) {
     const request = `/categories?${PageDefine(pageble)}`;
     const response = await axiosInstance.get(request);
-    console.log(axiosInstance);
     return response;
   }
   const response = await axiosInstance.get('/categories');
