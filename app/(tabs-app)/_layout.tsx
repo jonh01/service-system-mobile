@@ -6,7 +6,7 @@ export default function Layout() {
   return (
     <Tabs screenOptions={{ tabBarShowLabel: false }}>
       <Tabs.Screen
-        name="(stack)"
+        name="(stack-service)"
         options={{
           title: 'Serviço',
           headerShown: false,

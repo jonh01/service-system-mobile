@@ -1,11 +1,19 @@
 import axios from 'axios';
+import { router } from 'expo-router';
 
 import { SignOut } from './FireBaseAuth';
-import { persistor } from '../redux/store';
+import { persistor, store } from '../redux/store';
+import { CategoryResponse } from '../types/category';
 import { OrderInsert, OrderUpdate } from '../types/order';
-import { PageRequest } from '../types/page';
+import { PageRequest, PageResponse } from '../types/page';
 import { RatingInsert, RatingUpdate } from '../types/rating';
-import { ServiceProvidedInsert, ServiceProvidedUpdate, ServiceStatus } from '../types/service';
+import {
+  ServiceProvidedInsert,
+  ServiceProvidedSummaryResponse,
+  ServiceProvidedUpdate,
+  ServiceProvidedUserResponse,
+  ServiceStatus,
+} from '../types/service';
 import { UserInsert, UserUpdate } from '../types/user';
 
 const axiosInstance = axios.create({ baseURL: process.env.EXPO_PUBLIC_URL_SERVICE_API });
@@ -19,12 +27,12 @@ axiosInstance.interceptors.response.use(
   },
   async (error) => {
     const status: number = error.response ? error.response.status : null;
-    const googleToken =
-      'eyJhbGciOiJSUzI1NiIsImtpZCI6ImIyNjIwZDVlN2YxMzJiNTJhZmU4ODc1Y2RmMzc3NmMwNjQyNDlkMDQiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJhenAiOiI1MzUyMDM2MjEyMDQtaTFobzQydXR0MW9qNGplZnE5ajVhNGIzZDhzc2k5YzIuYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20iLCJhdWQiOiI1MzUyMDM2MjEyMDQtYjVmOWxncTRncjZobTFmcmdxdTZpNGQxZnI4MHJwYmwuYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20iLCJzdWIiOiIxMDM3MjY2MTI0MDI5ODkyNzk5MzMiLCJlbWFpbCI6ImpvbmhqaG91QGdtYWlsLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJuYW1lIjoiSm9uaCBKaG91IiwicGljdHVyZSI6Imh0dHBzOi8vbGgzLmdvb2dsZXVzZXJjb250ZW50LmNvbS9hL0FDZzhvY0txQ2VoWWpsVWVlLWtXRkc0elpvdnhYUGVwS1o0eWtnVEJVSV90NUs1V255QXdwQT1zOTYtYyIsImdpdmVuX25hbWUiOiJKb25oIiwiZmFtaWx5X25hbWUiOiJKaG91IiwiaWF0IjoxNzI2NTI5OTQ0LCJleHAiOjE3MjY1MzM1NDR9.Ve0asTP9oEsULnUwpBH2sPUuOQZNQD_zqDvXhccfGvFlBcz5xiEpCH2deDad-vfbe9uUl4quKaCKcPbEgw-hODt13slLRFZXwNBxmuwiND8TSnZ6RKHNPMbhPmE72qEzvz1UCX9FGr_7pnkP_6cATb7hXVAu_BDezfDpzuF6xquVBdpdT2kVE_ppo57R6izQM71IASahaIXva89pG12WR3FWR-W1-uxdVBAS_v5BbthlwVdEp6CuZ1N_fAJw9bgvmK_gbaLhxjYNPS0uTmgnHxggTopqPOSOvsdrQdEGeq4ZvrGDUBCzJTspd_2-ROfWVdNMzUGz-jseuffc7ecWAw';
+    const urlRequest: string = error.config.url;
 
     console.log('log erro 1: ' + status + ' refresh: ' + isRefreshing);
-    if (status === 401 || status === 403) {
+    if ((status === 401 || status === 403) && !urlRequest.includes('logged')) {
       const originalRequest = error.config;
+      console.log(urlRequest);
 
       // Verifica se já estamos atualizando o token
       if (!isRefreshing) {
@@ -41,8 +49,12 @@ axiosInstance.interceptors.response.use(
           }
         } catch (refreshError) {
           console.log('log erro 3: ' + status + ' refresh: ' + isRefreshing);
+
+          // Acesse diretamente o googleToken do estado do Redux
+          const googleToken = store.getState().auth.googleToken;
+
           // Se o refresh falhar, desloga o usuário
-          const loginResponse = await SignInAPI(googleToken);
+          const loginResponse = await SignInAPI(googleToken || '');
 
           if (loginResponse.status === 200) {
             console.log('signIn: ' + loginResponse.data);
@@ -62,6 +74,7 @@ axiosInstance.interceptors.response.use(
             persistor.purge().catch((error) => {
               console.log('error delete AsyncStorage: ', error);
             });
+            router.replace('/(stack-auth)');
           })
           .catch((error) => {
             console.log('error signOut: ', error);
@@ -84,12 +97,20 @@ const PageDefine = (pageble: PageRequest) => {
   return `page=${pageble.page ? pageble.page : 0}&size=${pageble.size ? pageble.size : 10}${sortString}`;
 };
 
-const ServiceDefine = (name?: string, id?: string) => {
-  if (name && id) return `name=${name}&categoryId=${id}`;
-  else if (name) return `name=${name}`;
-  else if (id) return `categoryId=${id}`;
-
-  return '';
+const ServiceDefine = (local?: string, id?: string) => {
+  if (local && local.length > 0 && id && id.length > 0){
+    console.log('local1: '+ local + ' category: '+ id);
+    return `local=${local}&categoryId=${id}&`;
+  }
+  else if (local && local.length > 0) {
+    console.log('local2: '+ local + ' category: '+ id);
+    return `local=${local}&`;
+  }
+  else if (id && id.length > 0) {
+    console.log('local3: '+ local + ' category: '+ id);
+    return `categoryId=${id}&`;
+  }
+  else return '';
 };
 
 // Login API
@@ -115,16 +136,37 @@ export const RefreshTokenAPI = async () => {
   return response;
 };
 
+export const LoggedAPI = async () => {
+  const response = await axiosInstance.post('authenticate/logged');
+  return response;
+};
+
 // Category
 
 export const findAllCategory = async (pageble?: PageRequest) => {
+  let response;
   if (pageble) {
     const request = `/categories?${PageDefine(pageble)}`;
-    const response = await axiosInstance.get(request);
-    return response;
+    response = await axiosInstance.get(request);
+  } else {
+    response = await axiosInstance.get('/categories');
   }
-  const response = await axiosInstance.get('/categories');
-  return response;
+
+  try {
+    const data = await response.data;
+    const page: PageResponse = {
+      first: data.first,
+      last: data.last,
+      numberOfElements: data.numberOfElements,
+      totalElements: data.totalElements,
+      totalPages: data.totalPages,
+      empty: data.empty,
+    };
+    const categories = data.content as CategoryResponse[];
+    return Promise.resolve({ page, categories });
+  } catch (error: any) {
+    return Promise.reject(error);
+  }
 };
 
 export const findCategoryById = async (id: string) => {
@@ -184,6 +226,17 @@ export const findAllOrderByServiceUserId = async (id: string, pageble?: PageRequ
 
 // Rating
 
+export const findAllRatingByService = async (serviceId: string, pageble?: PageRequest) => {
+  if (pageble) {
+    const request = `/services/${serviceId}/ratings?${PageDefine(pageble)}`;
+    const response = await axiosInstance.get(request);
+    return response;
+  }
+  const request = `/services/${serviceId}/ratings`;
+  const response = await axiosInstance.get(request);
+  return response;
+};
+
 export const createRating = async (rating: RatingInsert) => {
   const response = await axiosInstance.post('/ratings', rating);
   return response;
@@ -228,31 +281,65 @@ export const findServiceById = async (id: string) => {
 
 export const findAllService = async (
   status: ServiceStatus,
+  name: string,
   pageble?: PageRequest,
-  name?: string,
-  id?: string
+  categoryId?: string,
+  local?: string
 ) => {
   // buscar todos os serviços
+  let response;
   if (pageble) {
-    const request = `/services?${ServiceDefine(name, id)}&status=${status}&${PageDefine(pageble)}`;
-    const response = await axiosInstance.get(request);
-    return response;
+    const request = `/services?${PageDefine(pageble)}&${ServiceDefine(local, categoryId)}name=${name}&status=${status}`;
+    console.log('request: '+ request)
+    response = await axiosInstance.get(request);
+  } else {
+    const request = `/services?${ServiceDefine(local, categoryId)}name=${name}&status=${status}`;
+    response = await axiosInstance.get(request);
   }
-  const request = `/services?${ServiceDefine(name, id)}&status=${status}`;
-  const response = await axiosInstance.get(request);
-  return response;
+
+  try {
+    const data = await response.data;
+    const page: PageResponse = {
+      first: data.first,
+      last: data.last,
+      numberOfElements: data.numberOfElements,
+      totalElements: data.totalElements,
+      totalPages: data.totalPages,
+      empty: data.empty,
+    };
+    const services = data.content as ServiceProvidedSummaryResponse[];
+    return Promise.resolve({ page, services });
+  } catch (error: any) {
+    return Promise.reject(error);
+  }
 };
 
-export const findAllServiceByUserId = async (id: string, pageble?: PageRequest) => {
+export const findAllServiceByUserId = async (userId: string, pageble?: PageRequest) => {
   // buscar todos os serviços de um usuário
+  let response;
   if (pageble) {
-    const request = `/users/${id}/services?${PageDefine(pageble)}`;
-    const response = await axiosInstance.get(request);
-    return response;
+    const request = `/users/${userId}/services?${PageDefine(pageble)}`;
+    response = await axiosInstance.get(request);
+  } else {
+    const request = `/users/${userId}/services`;
+    response = await axiosInstance.get(request);
   }
-  const request = `/users/${id}/services`;
-  const response = await axiosInstance.get(request);
-  return response;
+
+  try {
+    const data = await response.data;
+    const page: PageResponse = {
+      first: data.first,
+      last: data.last,
+      numberOfElements: data.numberOfElements,
+      totalElements: data.totalElements,
+      totalPages: data.totalPages,
+      empty: data.empty,
+    };
+    const userServices = data.content as ServiceProvidedUserResponse[];
+    return Promise.resolve({ page, userServices });
+  } catch (error: any) {
+    return Promise.reject(error);
+  }
 };
 
 // User

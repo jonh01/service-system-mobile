@@ -27,7 +27,9 @@ export const SignOut = async () => {
     await GoogleSignin.signOut();
     auth()
       .signOut()
-      .then(() => console.log('Você está se desconectando...'));
+      .then(() => {
+        console.log('Você está se desconectando...');
+      });
   } catch (error) {
     console.error(error);
   }

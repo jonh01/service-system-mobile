@@ -1,4 +1,4 @@
-import { NumReviewsNote, RatingResponse } from './rating';
+import { NumReviewsNote } from './rating';
 
 export enum ServiceStatus {
   active = 'Active',
@@ -33,10 +33,12 @@ export type ServiceProvidedResponse = {
   localAction: string[];
   user: {
     id: string;
+    name: string;
+    image: string;
   };
-  ratings: RatingResponse[];
   category: {
     id: string;
+    name: string;
   };
   createdAt: string;
   numReviews: number;
@@ -51,10 +53,12 @@ export type ServiceProvidedSummaryResponse = {
   description: string;
   status: ServiceStatus;
   user: {
-    id: string;
+    name: string;
+    image: string;
   };
   category: {
     id: string;
+    name: string;
   };
   numReviews: number;
   sumReviews: number;

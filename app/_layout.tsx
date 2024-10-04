@@ -28,9 +28,10 @@ const Main = () => {
 
   return (
     <TamaguiProvider config={config}>
-      <Theme name={isThemeDark ? 'dark' : 'light'}>
-        <ThemeProvider value={isThemeDark ? DarkTheme : DefaultTheme}>
-          <Stack screenOptions={{ headerShown: false }}>
+      <Theme name="light">
+        <ThemeProvider value={DefaultTheme}>
+          <Stack screenOptions={{ headerShown: false }} initialRouteName="index">
+            <Stack.Screen name="index" options={{ title: 'Index' }} />
             <Stack.Screen name="(stack-auth)" options={{ title: 'Auth' }} />
             <Stack.Screen name="(tabs-app)" options={{ title: 'App' }} />
           </Stack>

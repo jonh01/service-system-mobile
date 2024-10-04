@@ -1,17 +1,18 @@
 import { GoogleSigninButton } from '@react-native-google-signin/google-signin';
-import { useRouter } from 'expo-router';
+import { Redirect, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Image, H1, useTheme } from 'tamagui';
 import * as Progress from 'react-native-progress';
+import { Image, H1, useTheme } from 'tamagui';
+
 import { Container } from '../components/Container';
+import { CustomProgress } from '../components/CustomProgress';
+import { signIn as SignInRedux } from '../redux/authSlice';
 import { SignIn as signInFirebase } from '../services/FireBaseAuth';
 import { SignInAPI } from '../services/ServicesAPI';
 import { useAppDispatch } from '../types/reduxHooks';
-import { CustomProgress } from '../components/CustomProgress';
-import { signIn as SignInRedux } from '../redux/authSlice';
 
 export default function Home() {
-  const theme = useTheme()
+  const theme = useTheme();
   const router = useRouter();
   const dispatch = useAppDispatch();
   const [loading, setLoading] = useState(false);
@@ -25,6 +26,7 @@ export default function Home() {
             dispatch(SignInRedux({ user: responseSuccess.data, googleToken: response.idToken! }));
             console.log(response.idToken! + '\n\n' + responseSuccess.data);
             setLoading(false);
+            router.replace('/(tabs-app)');
           })
           .catch((responseError) => {
             setLoading(false);
@@ -63,10 +65,10 @@ export default function Home() {
       <GoogleSigninButton
         size={GoogleSigninButton.Size.Wide}
         color={GoogleSigninButton.Color.Light}
-        style={{marginTop:160, marginBottom: 60}}
+        style={{ marginTop: 160, marginBottom: 60 }}
         onPress={() => handleSignIn()}
       />
-      <CustomProgress open={loading} location='flex-end'/>
+      <CustomProgress open={loading} location="flex-end" />
     </Container>
   );
 }

@@ -13,7 +13,7 @@ export default function Search() {
           title: 'Meus Serviços',
           headerTitleAlign: 'center',
           headerRight: () => (
-            <TouchableOpacity onPress={() => router.replace('/(stack)')}>
+            <TouchableOpacity onPress={() => router.replace('/(stack-service)')}>
               <FontAwesome6 name="repeat" size={22} />
             </TouchableOpacity>
           ),

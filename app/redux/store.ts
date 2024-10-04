@@ -12,12 +12,14 @@ import {
 } from 'redux-persist';
 
 import authSlice from './authSlice';
+import categoriesSlice from './categorySlice';
+import servicesSlice from './serviceSlice';
 import themeSlice from './themeSlice';
 
 const persistConfig = {
   key: 'root',
   storage: AsyncStorage,
-  blacklist: [],
+  blacklist: ['services', 'categories'],
 };
 
 const persistedAuthReducer = persistReducer(persistConfig, authSlice);
@@ -27,6 +29,8 @@ const store = configureStore({
   reducer: {
     auth: persistedAuthReducer,
     theme: persistedThemeReducer,
+    services: servicesSlice,
+    categories: categoriesSlice,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

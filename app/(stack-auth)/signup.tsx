@@ -104,7 +104,7 @@ export default function SignUp() {
           focusStyle={{
             borderColor: cpf != '' && !cpfRegex.test(cpf) ? '#ff0000' : '$borderColor',
           }}
-          value={cpf}
+          defaultValue={cpf}
           onChangeText={(text) => {
             setCpf(formatCPF(text));
           }}
@@ -120,7 +120,7 @@ export default function SignUp() {
           focusStyle={{
             borderColor: phone != '' && !phoneRegex.test(phone) ? '#ff0000' : '$borderColor',
           }}
-          value={phone}
+          defaultValue={phone}
           onChangeText={(text) => {
             setPhone(formatPhone(text));
           }}

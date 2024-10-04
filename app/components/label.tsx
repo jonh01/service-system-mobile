@@ -9,15 +9,16 @@ import {
 type LabelProps = LabelPropsTamagui &
   InputPropsTamagui & {
     name: string;
+    onChangeText?: (text: string) => void;
   };
 
-export function Label({ name, ...rest }: LabelProps) {
+export function Label({ name, onChangeText, ...rest }: LabelProps) {
   return (
     <XStack ai="center" space="$2" paddingHorizontal="$3">
       <LabelTamagui width={90} {...rest}>
         {name}
       </LabelTamagui>
-      <Input flex={1} focusStyle={{ borderWidth: 3 }} {...rest} />
+      <Input flex={1} focusStyle={{ borderWidth: 3 }} onChangeText={onChangeText} {...rest} />
     </XStack>
   );
 }

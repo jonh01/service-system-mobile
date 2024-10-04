@@ -1,0 +1,37 @@
+{
+    "data":[
+      {
+          "id": "1a2b3c4d-5678-9101-1121-314151617181",
+          "name": "Example 1",
+          "image": "http://picsum.photos/200/300",
+          "status": "Active",
+          "user": {
+            "id": "1a2b3c4d-5678-9101-1121-314151617181"
+          }
+      },
+      {
+          "id": "2b3c4d5e-6789-1011-1213-141516171819",
+          "name": "Example 2",
+          "image": "http://picsum.photos/200/300",
+          "status": "Disabled",
+          "user": {
+            "id": "1a2b3c4d-5678-9101-1121-314151617181"
+          }
+        },
+        {
+          "id": "3c4d5e6f-7890-1112-1314-151617181920",
+          "name": "Example 3",
+          "image": "http://picsum.photos/200/300",
+          "status": "Active",
+          "user": {
+            "id": "1a2b3c4d-5678-9101-1121-314151617181"
+          }
+        }
+      ],
+    "totalPages": 2,
+    "totalElements": 6,
+    "numberOfElements": 3,
+    "first": true,
+    "last": false,
+    "empty": false
+}
