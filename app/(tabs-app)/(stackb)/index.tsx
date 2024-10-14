@@ -1,17 +1,17 @@
-import { Tabs } from 'expo-router';
+import { router, Tabs } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { FlatList } from 'react-native';
 import { H4, Spinner, Text, useTheme, YStack } from 'tamagui';
 
-import { CustomCardService } from '../components/CustomCardService';
-import SearchButton from '../components/SearchButton';
-import SearchPopover from '../components/SearchPopover';
-import { TabsContainer } from '../components/TabsContainer';
-import { setLoadingServices, setServices } from '../redux/serviceSlice';
-import { findAllService } from '../services/ServicesAPI';
-import { PageRequest } from '../types/page';
-import { useAppDispatch, useAppSelector } from '../types/reduxHooks';
-import { ServiceStatus } from '../types/service';
+import { CustomCardService } from '../../components/CustomCardService';
+import SearchButton from '../../components/SearchButton';
+import SearchPopover from '../../components/SearchPopover';
+import { TabsContainer } from '../../components/TabsContainer';
+import { setLoadingServices, setServices } from '../../redux/serviceSlice';
+import { findAllService } from '../../services/ServicesAPI';
+import { PageRequest } from '../../types/page';
+import { useAppDispatch, useAppSelector } from '../../types/reduxHooks';
+import { ServiceStatus } from '../../types/service';
 
 export default function Search() {
   const dispatch = useAppDispatch();
@@ -87,6 +87,8 @@ export default function Search() {
     <TabsContainer overflow="hidden" pb={0} marginHorizontal={0}>
       <Tabs.Screen
         options={{
+          title: 'Buscar',
+          headerTitleAlign: 'center',
           headerRight: () => (
             <SearchPopover
               open={modal}
@@ -152,7 +154,7 @@ export default function Search() {
               userImage={item.user.image}
               star={(item.sumReviews * 1.0) / item.numReviews}
               onPress={() => {
-                console.log('clicou');
+                router.push(`/modal?serviceId=${item.id}`);
               }}
             />
           )}

@@ -4,7 +4,7 @@ import { SplashScreen, Stack } from 'expo-router';
 import { useEffect } from 'react';
 import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
-import { TamaguiProvider, Theme } from 'tamagui';
+import { PortalProvider, TamaguiProvider, Theme } from 'tamagui';
 
 import { persistor, store } from './redux/store';
 import { useAppSelector } from './types/reduxHooks';
@@ -45,7 +45,9 @@ export default function RootLayout() {
   return (
     <Provider store={store}>
       <PersistGate loading={null} persistor={persistor}>
-        <Main />
+        <PortalProvider shouldAddRootHost>
+          <Main />
+        </PortalProvider>
       </PersistGate>
     </Provider>
   );

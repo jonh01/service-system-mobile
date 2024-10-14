@@ -6,7 +6,7 @@ import { persistor, store } from '../redux/store';
 import { CategoryResponse } from '../types/category';
 import { OrderInsert, OrderUpdate } from '../types/order';
 import { PageRequest, PageResponse } from '../types/page';
-import { RatingInsert, RatingUpdate } from '../types/rating';
+import { RatingInsert, RatingResponse, RatingUpdate } from '../types/rating';
 import {
   ServiceProvidedInsert,
   ServiceProvidedSummaryResponse,
@@ -227,14 +227,30 @@ export const findAllOrderByServiceUserId = async (id: string, pageble?: PageRequ
 // Rating
 
 export const findAllRatingByService = async (serviceId: string, pageble?: PageRequest) => {
+  let response;
   if (pageble) {
     const request = `/services/${serviceId}/ratings?${PageDefine(pageble)}`;
-    const response = await axiosInstance.get(request);
-    return response;
+    response = await axiosInstance.get(request);
+  } else {
+    const request = `/services/${serviceId}/ratings`;
+    response = await axiosInstance.get(request);
   }
-  const request = `/services/${serviceId}/ratings`;
-  const response = await axiosInstance.get(request);
-  return response;
+
+  try {
+    const data = await response.data;
+    const page: PageResponse = {
+      first: data.first,
+      last: data.last,
+      numberOfElements: data.numberOfElements,
+      totalElements: data.totalElements,
+      totalPages: data.totalPages,
+      empty: data.empty,
+    };
+    const ratings = data.content as RatingResponse[];
+    return Promise.resolve({ page, ratings });
+  } catch (error: any) {
+    return Promise.reject(error);
+  }
 };
 
 export const createRating = async (rating: RatingInsert) => {

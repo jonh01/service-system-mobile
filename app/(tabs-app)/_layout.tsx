@@ -2,11 +2,11 @@ import { FontAwesome, FontAwesome6 } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import React from 'react';
 
-export default function Layout() {
+export default function AppLayout() {
   return (
     <Tabs screenOptions={{ tabBarShowLabel: false }}>
       <Tabs.Screen
-        name="(stack-service)"
+        name="(stacka)"
         options={{
           title: 'Serviço',
           headerShown: false,
@@ -18,10 +18,10 @@ export default function Layout() {
         }}
       />
       <Tabs.Screen
-        name="search"
+        name="(stackb)"
         options={{
           title: 'Buscar',
-          headerTitleAlign: 'center',
+          headerShown: false,
           tabBarIcon: ({ focused, color, size }) => {
             if (focused) return <FontAwesome name="search" color={color} size={size} />;
 
@@ -30,10 +30,10 @@ export default function Layout() {
         }}
       />
       <Tabs.Screen
-        name="profile"
+        name="(stackc)"
         options={{
           title: 'Perfil',
-          headerTitleAlign: 'center',
+          headerShown: false,
           tabBarIcon: ({ focused, color, size }) => {
             if (focused) return <FontAwesome name="user" color={color} size={size} />;
 

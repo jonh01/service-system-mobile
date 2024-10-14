@@ -35,6 +35,7 @@ export type ServiceProvidedResponse = {
     id: string;
     name: string;
     image: string;
+    phone: string;
   };
   category: {
     id: string;

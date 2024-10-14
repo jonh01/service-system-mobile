@@ -27,3 +27,17 @@ export const formatPhone = (value: string): string => {
 
   return value;
 };
+
+export const cleanPhone = (value: string): string => {
+  // Remove todos os caracteres não numéricos
+  return value.replace(/\D/g, '');
+};
+
+export const converterData = (dataString: string): string => {
+  const data = new Date(dataString);
+  return data.toLocaleDateString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
+};
