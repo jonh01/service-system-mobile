@@ -4,7 +4,7 @@ import { router } from 'expo-router';
 import { SignOut } from './FireBaseAuth';
 import { persistor, store } from '../redux/store';
 import { CategoryResponse } from '../types/category';
-import { OrderInsert, OrderUpdate } from '../types/order';
+import { OrderInsert, OrderResponse, OrderUpdate } from '../types/order';
 import { PageRequest, PageResponse } from '../types/page';
 import { RatingInsert, RatingResponse, RatingUpdate } from '../types/rating';
 import {
@@ -98,19 +98,16 @@ const PageDefine = (pageble: PageRequest) => {
 };
 
 const ServiceDefine = (local?: string, id?: string) => {
-  if (local && local.length > 0 && id && id.length > 0){
-    console.log('local1: '+ local + ' category: '+ id);
+  if (local && local.length > 0 && id && id.length > 0) {
+    console.log('local1: ' + local + ' category: ' + id);
     return `local=${local}&categoryId=${id}&`;
-  }
-  else if (local && local.length > 0) {
-    console.log('local2: '+ local + ' category: '+ id);
+  } else if (local && local.length > 0) {
+    console.log('local2: ' + local + ' category: ' + id);
     return `local=${local}&`;
-  }
-  else if (id && id.length > 0) {
-    console.log('local3: '+ local + ' category: '+ id);
+  } else if (id && id.length > 0) {
+    console.log('local3: ' + local + ' category: ' + id);
     return `categoryId=${id}&`;
-  }
-  else return '';
+  } else return '';
 };
 
 // Login API
@@ -196,32 +193,60 @@ export const findOrderById = async (id: string) => {
   return response;
 };
 
-export const findAllOrderByUserId = async (
-  id: string,
-  finished: boolean,
-  pageble?: PageRequest
-) => {
+export const findAllOrderByUserId = async (id: string, pageble?: PageRequest) => {
   // buscar todas as ordens do usuário
+  let response;
   if (pageble) {
-    const request = `/orders?userId=${id}&finished=${finished}&${PageDefine(pageble)}`;
-    const response = await axiosInstance.get(request);
-    return response;
+    const request = `/orders?userId=${id}&${PageDefine(pageble)}`;
+    response = await axiosInstance.get(request);
+  } else {
+    const request = `/orders?userId=${id}`;
+    response = await axiosInstance.get(request);
   }
-  const request = `/orders?userId=${id}&finished=${finished}`;
-  const response = await axiosInstance.get(request);
-  return response;
+
+  try {
+    const data = await response.data;
+    const page: PageResponse = {
+      first: data.first,
+      last: data.last,
+      numberOfElements: data.numberOfElements,
+      totalElements: data.totalElements,
+      totalPages: data.totalPages,
+      empty: data.empty,
+    };
+    const orders = data.content as OrderResponse[];
+    return Promise.resolve({ page, orders });
+  } catch (error: any) {
+    return Promise.reject(error);
+  }
 };
 
 export const findAllOrderByServiceUserId = async (id: string, pageble?: PageRequest) => {
   // buscar todas as ordens de todos os serviços que tenha o usuário como prestador deste serviço
+  let response;
   if (pageble) {
     const request = `/orders/allservices?userId=${id}&${PageDefine(pageble)}`;
-    const response = await axiosInstance.get(request);
-    return response;
+    response = await axiosInstance.get(request);
+  } else {
+    const request = `/orders/allservices?userId=${id}`;
+    response = await axiosInstance.get(request);
   }
-  const request = `/orders/allservices?userId=${id}`;
-  const response = await axiosInstance.get(request);
-  return response;
+
+  try {
+    const data = await response.data;
+    const page: PageResponse = {
+      first: data.first,
+      last: data.last,
+      numberOfElements: data.numberOfElements,
+      totalElements: data.totalElements,
+      totalPages: data.totalPages,
+      empty: data.empty,
+    };
+    const ordersUser = data.content as OrderResponse[];
+    return Promise.resolve({ page, ordersUser });
+  } catch (error: any) {
+    return Promise.reject(error);
+  }
 };
 
 // Rating
@@ -306,7 +331,7 @@ export const findAllService = async (
   let response;
   if (pageble) {
     const request = `/services?${PageDefine(pageble)}&${ServiceDefine(local, categoryId)}name=${name}&status=${status}`;
-    console.log('request: '+ request)
+    console.log('request: ' + request);
     response = await axiosInstance.get(request);
   } else {
     const request = `/services?${ServiceDefine(local, categoryId)}name=${name}&status=${status}`;

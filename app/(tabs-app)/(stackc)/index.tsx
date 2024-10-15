@@ -36,7 +36,7 @@ export default function Profile() {
   const loading = useAppSelector((state) => state.services.loading);
   const [error, setError] = useState('');
   const services = useAppSelector((state) => state.services.userServices);
-  const pageServices = useAppSelector((state) => state.services.pageResponse);
+  const pageServices = useAppSelector((state) => state.services.pageUserResponse);
 
   const [pageble, setPageble] = useState<PageRequest>({
     page: 0,

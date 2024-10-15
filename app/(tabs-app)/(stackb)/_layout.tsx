@@ -2,8 +2,14 @@ import { Stack } from 'expo-router';
 
 export default function SearchLayout() {
   return (
-    <Stack>
-      <Stack.Screen name="index" />
+    <Stack initialRouteName="index">
+      <Stack.Screen
+        name="index"
+        options={{
+          animation: 'none',
+          headerBackVisible: false,
+        }}
+      />
       <Stack.Screen
         name="modal"
         options={{

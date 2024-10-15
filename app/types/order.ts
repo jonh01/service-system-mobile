@@ -24,9 +24,17 @@ export type OrderResponse = {
   price: number;
   user: {
     id: string;
+    name: string;
+    image: string;
   };
   serviceProvided: {
     id: string;
+    name: string;
+    user: {
+      id: string;
+      name: string;
+      image: string;
+    };
   };
   createdAt: Date;
 };

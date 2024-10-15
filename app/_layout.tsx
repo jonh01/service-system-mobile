@@ -2,6 +2,7 @@ import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native
 import { useFonts } from 'expo-font';
 import { SplashScreen, Stack } from 'expo-router';
 import { useEffect } from 'react';
+import Toast from 'react-native-toast-message';
 import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 import { PortalProvider, TamaguiProvider, Theme } from 'tamagui';
@@ -35,6 +36,7 @@ const Main = () => {
             <Stack.Screen name="(stack-auth)" options={{ title: 'Auth' }} />
             <Stack.Screen name="(tabs-app)" options={{ title: 'App' }} />
           </Stack>
+          <Toast />
         </ThemeProvider>
       </Theme>
     </TamaguiProvider>

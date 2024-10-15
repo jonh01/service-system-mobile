@@ -13,6 +13,7 @@ import {
 
 import authSlice from './authSlice';
 import categoriesSlice from './categorySlice';
+import orderSlice from './orderSlice';
 import ratingSlice from './ratingSlice';
 import servicesSlice from './serviceSlice';
 import themeSlice from './themeSlice';
@@ -20,7 +21,7 @@ import themeSlice from './themeSlice';
 const persistConfig = {
   key: 'root',
   storage: AsyncStorage,
-  blacklist: ['services', 'categories', 'ratings'],
+  blacklist: ['services', 'categories', 'ratings', 'orders'],
 };
 
 const persistedAuthReducer = persistReducer(persistConfig, authSlice);
@@ -33,6 +34,7 @@ const store = configureStore({
     services: servicesSlice,
     categories: categoriesSlice,
     ratings: ratingSlice,
+    orders: orderSlice,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

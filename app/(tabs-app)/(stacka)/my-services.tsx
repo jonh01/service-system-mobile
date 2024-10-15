@@ -10,7 +10,7 @@ export default function Search() {
     <TabsContainer>
       <Stack.Screen
         options={{
-          title: 'Meus Serviços',
+          title: 'Minhas Ordens',
           headerTitleAlign: 'center',
           headerRight: () => (
             <TouchableOpacity onPress={() => router.replace('/(stacka)')}>

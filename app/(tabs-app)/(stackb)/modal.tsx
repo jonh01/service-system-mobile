@@ -1,8 +1,9 @@
 import { FontAwesome } from '@expo/vector-icons';
-import { useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { FlatList, Linking, VirtualizedList } from 'react-native';
+import { FlatList, Linking } from 'react-native';
 import { StarRatingDisplay } from 'react-native-star-rating-widget';
+import Toast from 'react-native-toast-message';
 import {
   Separator,
   Avatar,
@@ -13,21 +14,25 @@ import {
   Text,
   XStack,
   YStack,
-  Accordion,
-  Square,
-  Button,
-  Theme,
   useTheme,
 } from 'tamagui';
 
 import { CustomAlertDialog } from '~/app/components/CustomAlertDialog';
 import CustomModal from '~/app/components/CustomModal';
+import { CustomTabs } from '~/app/components/CustomTabs';
 import { LocalityTooltip } from '~/app/components/LocalityTooltip';
 import { RatingCard } from '~/app/components/RatingCard';
-import { RatingTabs } from '~/app/components/RatingTabs';
 import { ReviewsAvarenge } from '~/app/components/ReviewsAvarenge';
+import { setLoadingOrders, setOrders } from '~/app/redux/orderSlice';
 import { setLoadingRating, setRatings } from '~/app/redux/ratingSlice';
-import { createOrder, findAllRatingByService, findServiceById } from '~/app/services/ServicesAPI';
+import { setServices } from '~/app/redux/serviceSlice';
+import {
+  createOrder,
+  findAllOrderByUserId,
+  findAllRatingByService,
+  findServiceById,
+} from '~/app/services/ServicesAPI';
+import { Error } from '~/app/types/error';
 import { PageRequest } from '~/app/types/page';
 import { NumReviewsNote } from '~/app/types/rating';
 import { useAppDispatch, useAppSelector } from '~/app/types/reduxHooks';
@@ -55,7 +60,7 @@ export default function Modal() {
   const pageRatings = useAppSelector((state) => state.ratings.pageResponse);
 
   const [service, setService] = useState<ServiceProvidedResponse>();
-  const [error, setError] = useState('');
+  const [errorMessage, setErrorMessage] = useState<Error | null>();
 
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -72,7 +77,7 @@ export default function Modal() {
 
   useEffect(() => {
     if (serviceId.length > 0) {
-      setError('');
+      setErrorMessage(null);
       findServiceById(serviceId)
         .then((response) => {
           setService(response.data as ServiceProvidedResponse);
@@ -80,14 +85,17 @@ export default function Modal() {
         })
         .catch((error) => {
           console.log('error:', error.message);
-          setError(error.message);
+          setErrorMessage({
+            title: 'Erro ao Buscar Serviço',
+            text: 'Não foram retornados serviços',
+          });
         });
     }
   }, []);
 
   useEffect(() => {
     if (serviceId.length > 0) {
-      setError('');
+      setErrorMessage(null);
       dispatch(setLoadingRating());
       findAllRatingByService(serviceId, ratingPageble)
         .then((response) => {
@@ -96,15 +104,26 @@ export default function Modal() {
         })
         .catch((error) => {
           console.log('error:', error.message);
-          setError(error.message);
+          setErrorMessage({
+            title: 'Erro ao Buscar Comentários',
+            text: 'Não foi retornado comentário para esse serviço.',
+          });
         });
       setIsRefreshing(false);
     }
   }, [ratingPageble]);
 
-  if (!loadingRatings && error !== '') {
-    console.log('Error: ', error);
-  }
+  useEffect(() => {
+    if (errorMessage) {
+      Toast.show({
+        autoHide: true,
+        visibilityTime: 5000,
+        type: 'error',
+        text1: errorMessage?.title,
+        text2: errorMessage?.text,
+      });
+    }
+  }, [setErrorMessage]);
 
   const onRefresh = () => {
     if (serviceId.length > 0) {
@@ -135,16 +154,28 @@ export default function Modal() {
       },
     })
       .then((response) => {
-        console.log('Ordem criada, indo para Whatsapp. Ordem: ' + response.data);
+        console.log('Ordem criada, indo para WhatsApp. Ordem: ' + response.data);
+        dispatch(setLoadingOrders());
+        findAllOrderByUserId(user!.id).then((response) => {
+          dispatch(setOrders(response));
+          console.log('Orders:', response);
+        });
         Linking.openURL(`http://api.whatsapp.com/send?phone=${cleanPhone(service!.user.phone)}`);
       })
       .catch((error) => {
         console.log('error ordem: ' + error);
+        setErrorMessage({
+          title: 'Erro ao Criar Ordem',
+          text: 'O usuário já possui uma ordem ativa para esse serviço.',
+        });
       });
   };
 
   return service ? (
-    <CustomModal>
+    <CustomModal
+      routeReturn={() => {
+        router.back();
+      }}>
       <YStack space="$6">
         <XStack maxHeight={500} w="100%" justifyContent="space-between" alignItems="flex-start">
           <YStack ml={20} mr={20}>
@@ -185,16 +216,18 @@ export default function Modal() {
             />
           </YStack>
         </XStack>
-        <RatingTabs
-          ratings={
+        <CustomTabs
+          width={390}
+          height={518}
+          tab1={
             <YStack flex={1}>
               <FlatList
                 style={{ backgroundColor: '#fff' }}
                 showsVerticalScrollIndicator
-                data={ratings} // alterar
+                data={ratings}
                 refreshing={isRefreshing}
                 onRefresh={onRefresh}
-                keyExtractor={(service) => service.id.toString()}
+                keyExtractor={(rating) => rating.id.toString()}
                 ListEmptyComponent={
                   !loadingRatings ? (
                     <YStack ai="center">
@@ -204,7 +237,9 @@ export default function Modal() {
                 }
                 initialNumToRender={8}
                 ItemSeparatorComponent={() => <Separator marginVertical={20} />}
-                renderItem={({ item }) => <RatingCard rating={item} />}
+                renderItem={({ item }) =>
+                  item.serviceProvided.id.includes(serviceId) ? <RatingCard rating={item} /> : null
+                }
                 onEndReachedThreshold={0.1}
                 onEndReached={ratings != null ? fetchMoreData : null}
                 ListFooterComponent={
@@ -213,7 +248,8 @@ export default function Modal() {
               />
             </YStack>
           }
-          reviewsNote={
+          tab1Name="Comentários"
+          tab2={
             <YStack
               alignContent="center"
               alignItems="center"
@@ -225,6 +261,7 @@ export default function Modal() {
               {reviewsNoteView(service.numReviewsNote)}
             </YStack>
           }
+          tab2Name="Avaliações"
         />
         <CustomAlertDialog
           alertTitle="Abrir WhatsApp"

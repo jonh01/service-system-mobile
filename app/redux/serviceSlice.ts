@@ -9,6 +9,7 @@ interface ServiceSliceData {
   services: ServiceProvidedSummaryResponse[] | null;
   userServices: ServiceProvidedUserResponse[] | null;
   pageResponse: PageResponse | null;
+  pageUserResponse: PageResponse | null;
 }
 
 const initialState: ServiceSliceData = {
@@ -16,6 +17,7 @@ const initialState: ServiceSliceData = {
   services: null,
   userServices: null,
   pageResponse: null,
+  pageUserResponse: null,
 };
 
 const servicesSlice = createSlice({
@@ -28,7 +30,7 @@ const servicesSlice = createSlice({
     setUserServices: (state, action) => {
       state.loading = false;
       if (action.payload != null) {
-        state.pageResponse = action.payload.page;
+        state.pageUserResponse = action.payload.page;
         state.userServices = action.payload.page.first
           ? action.payload.userServices
           : [...state.userServices!, ...action.payload.userServices];

@@ -1,33 +1,34 @@
-import { Separator, SizableText, Tabs, TabsContentProps } from 'tamagui';
+import { Separator, SizableText, Tabs, TabsContentProps, TabsProps } from 'tamagui';
 
-type RatingTabsProps = {
-  ratings: React.JSX.Element;
-  reviewsNote: React.JSX.Element;
+type CustomTabsProps = TabsProps & {
+  tab1: React.JSX.Element;
+  tab1Name: string;
+  tab2: React.JSX.Element;
+  tab2Name: string;
 };
-export const RatingTabs = ({ ratings, reviewsNote }: RatingTabsProps) => {
+export const CustomTabs = ({ tab1, tab1Name, tab2, tab2Name, ...props }: CustomTabsProps) => {
   return (
     <Tabs
       alignSelf="center"
       defaultValue="tab1"
       orientation="horizontal"
       flexDirection="column"
-      width={390}
-      height={518}
       borderRadius="$4"
       borderWidth="$0.25"
       overflow="hidden"
-      borderColor="$borderColor">
+      borderColor="$borderColor"
+      {...props}>
       <Tabs.List separator={<Separator vertical />} disablePassBorderRadius="bottom">
         <Tabs.Tab flex={1} value="tab1">
-          <SizableText fontFamily="$body">Comentários</SizableText>
+          <SizableText fontFamily="$body">{tab1Name}</SizableText>
         </Tabs.Tab>
         <Tabs.Tab flex={1} value="tab2">
-          <SizableText fontFamily="$body">Avaliações</SizableText>
+          <SizableText fontFamily="$body">{tab2Name}</SizableText>
         </Tabs.Tab>
       </Tabs.List>
       <Separator />
-      <TabsContent value="tab1">{ratings}</TabsContent>
-      <TabsContent value="tab2">{reviewsNote}</TabsContent>
+      <TabsContent value="tab1">{tab1}</TabsContent>
+      <TabsContent value="tab2">{tab2}</TabsContent>
     </Tabs>
   );
 };
