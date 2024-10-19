@@ -249,6 +249,13 @@ export const findAllOrderByServiceUserId = async (id: string, pageble?: PageRequ
   }
 };
 
+export const exitstsOrderByUserIdAndServiceId = async (userId: string, serviceId: string) => {
+  const request = `/orders/exists?userId=${userId}&serviceId=${serviceId}`;
+  const response = await axiosInstance.get(request);
+
+  return response;
+};
+
 // Rating
 
 export const findAllRatingByService = async (serviceId: string, pageble?: PageRequest) => {

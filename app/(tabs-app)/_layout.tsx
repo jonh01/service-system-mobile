@@ -18,10 +18,9 @@ export default function AppLayout() {
         }}
       />
       <Tabs.Screen
-        name="(stackb)"
+        name="search"
         options={{
           title: 'Buscar',
-          headerShown: false,
           tabBarIcon: ({ focused, color, size }) => {
             if (focused) return <FontAwesome name="search" color={color} size={size} />;
 
@@ -30,10 +29,9 @@ export default function AppLayout() {
         }}
       />
       <Tabs.Screen
-        name="(stackc)"
+        name="profile"
         options={{
           title: 'Perfil',
-          headerShown: false,
           tabBarIcon: ({ focused, color, size }) => {
             if (focused) return <FontAwesome name="user" color={color} size={size} />;
 

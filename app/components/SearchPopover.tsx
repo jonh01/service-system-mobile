@@ -16,7 +16,7 @@ import {
 } from 'tamagui';
 
 import { RadioGroupItemWithLabel } from './RadioGroupItemWithLabel';
-import { Label } from './label';
+import { Label } from './Label';
 import { setCategories, setLoadingCategory } from '../redux/categorySlice';
 import { findAllCategory } from '../services/ServicesAPI';
 import { CategoryResponse } from '../types/category';
@@ -44,7 +44,7 @@ export default function SearchPopover({ shouldAdapt, exit, ...props }: SearchPop
     sort: [
       {
         orderBy: 'id',
-        direction: 'asc',
+        direction: 'desc',
       },
     ],
   });

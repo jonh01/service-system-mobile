@@ -1,17 +1,19 @@
-import { router, Tabs } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { Tabs } from 'expo-router';
+import React, { useEffect, useState } from 'react';
 import { FlatList } from 'react-native';
 import { H4, Spinner, Text, useTheme, YStack } from 'tamagui';
 
-import { CustomCardService } from '../../components/CustomCardService';
-import SearchButton from '../../components/SearchButton';
-import SearchPopover from '../../components/SearchPopover';
-import { TabsContainer } from '../../components/TabsContainer';
-import { setLoadingServices, setServices } from '../../redux/serviceSlice';
-import { findAllService } from '../../services/ServicesAPI';
-import { PageRequest } from '../../types/page';
-import { useAppDispatch, useAppSelector } from '../../types/reduxHooks';
-import { ServiceStatus } from '../../types/service';
+import { CustomCardService } from '../components/CustomCardService';
+import SearchButton from '../components/SearchButton';
+import SearchPopover from '../components/SearchPopover';
+import { TabsContainer } from '../components/TabsContainer';
+import { setLoadingServices, setServices } from '../redux/serviceSlice';
+import { findAllService } from '../services/ServicesAPI';
+import { PageRequest } from '../types/page';
+import { useAppDispatch, useAppSelector } from '../types/reduxHooks';
+import { ServiceStatus } from '../types/service';
+
+import { ModalService } from '~/app/components/ModalService';
 
 export default function Search() {
   const dispatch = useAppDispatch();
@@ -23,6 +25,8 @@ export default function Search() {
   const pageServices = useAppSelector((state) => state.services.pageResponse);
 
   const [modal, setModal] = useState(false);
+  const [modalService, setModalService] = useState(false);
+  const [modalServiceId, setModalServiceId] = useState('');
   const [name, setName] = useState('');
   const [category, setCategory] = useState('');
   const [local, setLocal] = useState('');
@@ -35,7 +39,7 @@ export default function Search() {
     sort: [
       {
         orderBy: 'id',
-        direction: 'asc',
+        direction: 'desc',
       },
     ],
   });
@@ -154,7 +158,8 @@ export default function Search() {
               userImage={item.user.image}
               star={(item.sumReviews * 1.0) / item.numReviews}
               onPress={() => {
-                router.push(`/modal?serviceId=${item.id}`);
+                setModalServiceId(item.id);
+                setModalService(true);
               }}
             />
           )}
@@ -165,6 +170,13 @@ export default function Search() {
           }
         />
       </YStack>
+      <ModalService
+        serviceId={modalServiceId}
+        modalVisible={modalService}
+        setModalVisible={() => {
+          setModalService(!modalService);
+        }}
+      />
     </TabsContainer>
   );
 }

@@ -1,20 +1,22 @@
 import { FontAwesome6 } from '@expo/vector-icons';
 import { Stack, router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { FlatList, TouchableOpacity } from 'react-native';
+import { FlatList, Linking, TouchableOpacity } from 'react-native';
 import Toast from 'react-native-toast-message';
-import { H4, Separator, Spinner, Text, useTheme, YStack } from 'tamagui';
+import { H4, Spinner, useTheme, YStack } from 'tamagui';
 
-import { CustomTabs } from '~/app/components/CustomTabs';
+import { ModalNewRating } from '~/app/components/ModalNewRating';
+import { ModalOrder } from '~/app/components/ModalOrder';
+import { ModalService } from '~/app/components/ModalService';
 import { OrderCard } from '~/app/components/OrderCard';
-import { RatingCard } from '~/app/components/RatingCard';
 import { TabsContainer } from '~/app/components/TabsContainer';
 import { setLoadingOrders, setOrders } from '~/app/redux/orderSlice';
-import { findAllOrderByUserId } from '~/app/services/ServicesAPI';
-import { Error } from '~/app/types/error';
+import { findAllOrderByUserId, updateOrder } from '~/app/services/ServicesAPI';
+import { MessageToast } from '~/app/types/message';
 import { OrderResponse } from '~/app/types/order';
 import { PageRequest } from '~/app/types/page';
 import { useAppDispatch, useAppSelector } from '~/app/types/reduxHooks';
+import { cleanPhone } from '~/app/utils/formatters';
 
 export default function Services() {
   const theme = useTheme();
@@ -24,52 +26,68 @@ export default function Services() {
   const orders = useAppSelector((state) => state.orders.orders);
   const pageOrders = useAppSelector((state) => state.orders.pageOrdersResponse);
 
-  const [errorMessage, setErrorMessage] = useState<Error | null>();
+  const [modalService, setModalService] = useState(false);
+  const [modalOrder, setModalOrder] = useState(false);
+  const [modalNewRating, setModalNewRating] = useState(false);
+
+  const [modalServiceId, setModalServiceId] = useState('');
+  const [modalOrderItem, setModalOrderItem] = useState<OrderResponse>();
+  const [modalNewRatingServiceId, setModalNewRatingServiceId] = useState('');
+
+  const [message, setMessage] = useState<MessageToast | null>();
 
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const [sucessAttOrder, setSucessAttOrder] = useState(false);
 
   const [orderPageble, setOrderPageble] = useState<PageRequest>({
     page: 0,
     size: 6,
     sort: [
       {
-        orderBy: 'id',
-        direction: 'asc',
+        orderBy: 'endAt',
+        direction: 'desc',
+      },
+      {
+        orderBy: 'startAt',
+        direction: 'desc',
       },
     ],
   });
 
   useEffect(() => {
-    if (user!.id.length > 0) {
-      setErrorMessage(null);
+    if (user!.id.length > 0 || (user!.id.length > 0 && sucessAttOrder)) {
+      setMessage(null);
       dispatch(setLoadingOrders());
       findAllOrderByUserId(user!.id, orderPageble)
         .then((response) => {
           dispatch(setOrders(response));
           console.log('Orders:', response);
         })
-        .catch((error) => {
-          console.log('error:', error.message);
-          setErrorMessage({
+        .catch(() => {
+          console.log(':', message);
+          setMessage({
+            type: 'error',
             title: 'Erro ao Buscar Ordens',
             text: 'Não foram retornadas ordens',
           });
         });
       setIsRefreshing(false);
+      setSucessAttOrder(false);
     }
-  }, [orderPageble]);
+  }, [orderPageble, sucessAttOrder]);
 
   useEffect(() => {
-    if (errorMessage) {
+    if (message) {
       Toast.show({
         autoHide: true,
         visibilityTime: 5000,
-        type: 'error',
-        text1: errorMessage?.title,
-        text2: errorMessage?.text,
+        type: message.type,
+        text1: message?.title,
+        text2: message?.text,
       });
     }
-  }, [setErrorMessage]);
+  }, [setMessage]);
 
   const onRefresh = () => {
     if (user!.id.length > 0) {
@@ -87,6 +105,21 @@ export default function Services() {
     }
   };
 
+  const closeOrder = (orderId: string) => {
+    updateOrder(orderId, { endAt: new Date() })
+      .then(() => {
+        onRefresh();
+        setModalNewRating(true);
+      })
+      .catch(() => {
+        setMessage({
+          type: 'error',
+          title: 'Erro ao Finalizar Ordem',
+          text: 'Tente novamente. Se persistir entre em contato conosco',
+        });
+      });
+  };
+
   return (
     <TabsContainer overflow="hidden" pb={0} marginHorizontal={0}>
       <Stack.Screen
@@ -94,7 +127,7 @@ export default function Services() {
           title: 'Ordens',
           headerTitleAlign: 'center',
           headerRight: () => (
-            <TouchableOpacity onPress={() => router.replace('/my-services')}>
+            <TouchableOpacity onPress={() => router.replace('/my-orders')}>
               <FontAwesome6 name="repeat" size={22} />
             </TouchableOpacity>
           ),
@@ -118,16 +151,31 @@ export default function Services() {
           initialNumToRender={8}
           renderItem={({ item }) => (
             <OrderCard
+              pendding={() => {
+                const existsLocal = item.local;
+                if (item.endAt == null && existsLocal == null) return true;
+                else if (item.endAt == null && existsLocal == undefined) return true;
+                else return false;
+              }}
               order={item}
               openService={() => {
-                console.log('teste1');
+                setModalServiceId(item.serviceProvided.id);
+                setModalService(true);
               }}
               closeOrder={() => {
-                console.log('teste2');
+                closeOrder(item.id);
+                setModalNewRatingServiceId(item.serviceProvided.id);
+              }}
+              openChat={() => {
+                Linking.openURL(
+                  `http://api.whatsapp.com/send?phone=${cleanPhone(item.serviceProvided.user.phone)}`
+                );
               }}
               openOrder={() => {
-                console.log('teste3');
+                setModalOrderItem(item);
+                setModalOrder(true);
               }}
+              orderOpen={item.endAt !== null}
             />
           )}
           onEndReachedThreshold={0.1}
@@ -137,6 +185,30 @@ export default function Services() {
           }
         />
       </YStack>
+      <ModalService
+        serviceId={modalServiceId}
+        modalVisible={modalService}
+        setModalVisible={() => {
+          setModalService(!modalService);
+        }}
+      />
+      <ModalOrder
+        order={modalOrderItem ?? null}
+        modalVisible={modalOrder}
+        setModalVisible={() => {
+          setModalOrder(!modalOrder);
+        }}
+        successAtt={(sucess) => {
+          setSucessAttOrder(sucess);
+        }}
+      />
+      <ModalNewRating
+        serviceId={modalNewRatingServiceId}
+        modalVisible={modalNewRating}
+        setModalVisible={() => {
+          setModalNewRating(!modalNewRating);
+        }}
+      />
     </TabsContainer>
   );
 }

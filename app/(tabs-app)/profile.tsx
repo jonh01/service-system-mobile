@@ -16,15 +16,15 @@ import {
   H4,
 } from 'tamagui';
 
-import { CustomCardMyService } from '../../components/CustomCardMyService';
-import ProfilePopover from '../../components/ProfilePopover';
-import { setLoadingServices, setUserServices } from '../../redux/serviceSlice';
-import { persistor } from '../../redux/store';
-import { SignOut } from '../../services/FireBaseAuth';
-import { findAllServiceByUserId, SignOutAPI } from '../../services/ServicesAPI';
-import { PageRequest } from '../../types/page';
-import { useAppDispatch, useAppSelector } from '../../types/reduxHooks';
-import { ServiceStatus } from '../../types/service';
+import { CustomCardMyService } from '../components/CustomCardMyService';
+import ProfilePopover from '../components/ProfilePopover';
+import { setLoadingServices, setUserServices } from '../redux/serviceSlice';
+import { persistor } from '../redux/store';
+import { SignOut } from '../services/FireBaseAuth';
+import { findAllServiceByUserId, SignOutAPI } from '../services/ServicesAPI';
+import { PageRequest } from '../types/page';
+import { useAppDispatch, useAppSelector } from '../types/reduxHooks';
+import { ServiceStatus } from '../types/service';
 
 import { TabsContainer } from '~/app/components/TabsContainer';
 
@@ -44,7 +44,7 @@ export default function Profile() {
     sort: [
       {
         orderBy: 'id',
-        direction: 'asc',
+        direction: 'desc',
       },
     ],
   });
@@ -118,7 +118,7 @@ export default function Profile() {
       <Image
         marginHorizontal={-10}
         source={{
-          uri: require('../../../assets/technology-background.png'),
+          uri: require('../../assets/technology-background.png'),
           height: 260,
         }}
       />

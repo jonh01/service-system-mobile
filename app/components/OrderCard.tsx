@@ -1,5 +1,6 @@
+import { FontAwesome, FontAwesome6 } from '@expo/vector-icons';
 import { TouchableOpacity, TouchableWithoutFeedback } from 'react-native';
-import { Avatar, Button, Text, XStack, YStack } from 'tamagui';
+import { Avatar, Button, Text, useTheme, XStack, YStack } from 'tamagui';
 
 import { OrderResponse } from '../types/order';
 
@@ -8,8 +9,20 @@ type OrderCardProps = {
   openService: () => void;
   closeOrder: () => void;
   openOrder: () => void;
+  openChat: () => void;
+  pendding: () => boolean;
+  orderOpen: boolean;
 };
-export const OrderCard = ({ order, openService, closeOrder, openOrder }: OrderCardProps) => {
+export const OrderCard = ({
+  order,
+  openService,
+  closeOrder,
+  openOrder,
+  openChat,
+  pendding,
+  orderOpen,
+}: OrderCardProps) => {
+  const theme = useTheme();
   return (
     <TouchableOpacity activeOpacity={0.7} onPress={openService}>
       <XStack
@@ -30,7 +43,7 @@ export const OrderCard = ({ order, openService, closeOrder, openOrder }: OrderCa
           justifyContent="center"
           mr={14}
           ml={10}>
-          <Avatar circular size="$8">
+          <Avatar circular size="$6">
             <Avatar.Image
               src={order.serviceProvided.user.image ?? 'http://picsum.photos/200/300'}
             />
@@ -38,25 +51,47 @@ export const OrderCard = ({ order, openService, closeOrder, openOrder }: OrderCa
           </Avatar>
         </YStack>
         <YStack flex={1} space="$1">
-          <Text
-            maxWidth={200}
-            ml={5}
-            numberOfLines={1}
-            ellipsizeMode="tail"
-            fontWeight={500}
-            fontSize="$6">
-            {order.serviceProvided.name}
-          </Text>
+          <XStack>
+            <Text
+              maxWidth={200}
+              ml={5}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+              fontWeight={500}
+              fontSize="$6">
+              {order.serviceProvided.name}
+            </Text>
+            {pendding() ? (
+              <FontAwesome6
+                name="circle-info"
+                size={14}
+                color="#ff0022"
+                style={{ marginLeft: 5 }}
+              />
+            ) : null}
+          </XStack>
           <Text ml={5} fontSize="$4" color="$gray10Light">
             {order.serviceProvided.user.name}
           </Text>
           <TouchableWithoutFeedback>
             <XStack justifyContent="space-evenly" marginVertical={15}>
-              <Button size="$3" onPress={closeOrder}>
+              <Button
+                size="$2"
+                onPress={closeOrder}
+                disabled={orderOpen}
+                bc={orderOpen ? '#cccccc28' : '#ffb2b271'}
+                color={orderOpen ? '#4949498f' : '#000'}>
                 Fechar Ordem
               </Button>
-              <Button size="$3" onPress={openOrder}>
+              <Button size="$2" onPress={openOrder}>
                 Exibir Ordem
+              </Button>
+              <Button
+                size="$2"
+                onPress={openChat}
+                bc="#fff"
+                pressStyle={{ backgroundColor: 'rgba(79, 83, 80, 0.055)' }}>
+                <FontAwesome name="whatsapp" size={26} color={theme.green9.get()} />
               </Button>
             </XStack>
           </TouchableWithoutFeedback>

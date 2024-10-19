@@ -2,7 +2,7 @@ import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Button, Form, H1, Image, Spinner } from 'tamagui';
 
-import { Label } from '../components/label';
+import { Label } from '../components/Label';
 import { signIn } from '../redux/authSlice';
 import { SignUpAPI } from '../services/ServicesAPI';
 import { useAppDispatch } from '../types/reduxHooks';
