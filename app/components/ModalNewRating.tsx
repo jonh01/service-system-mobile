@@ -6,17 +6,25 @@ import Toast from 'react-native-toast-message';
 import { Button, Form, H4, H6, Label, Spinner, TextArea, XStack, YStack } from 'tamagui';
 
 import { setRatings } from '../redux/ratingSlice';
-import { createRating, findAllRatingByService } from '../services/ServicesAPI';
+import {
+  createRating,
+  findAllRatingByService,
+  findRatingById,
+  findRatingByUserIdAndServiceId,
+  updateRating,
+} from '../services/ServicesAPI';
 import { MessageToast } from '../types/message';
-import { RatingInsert } from '../types/rating';
+import { RatingInsert, RatingResponse, RatingUpdate } from '../types/rating';
 import { useAppDispatch, useAppSelector } from '../types/reduxHooks';
 
 export const ModalNewRating = ({
   serviceId,
+  update,
   modalVisible,
   setModalVisible,
 }: Readonly<{
   serviceId: string;
+  update: boolean;
   modalVisible: boolean;
   setModalVisible: () => void;
 }>) => {
@@ -28,10 +36,11 @@ export const ModalNewRating = ({
     comment: '',
     images: [],
     note: 0,
-    serviceProvided: { id: serviceId },
-    user: { id: user!.id },
+    serviceProvided: { id: serviceId ?? '' },
+    user: { id: user?.id ?? '' },
   });
 
+  const [ratingId, setRatingId] = useState('');
   const [message, setMessage] = useState<MessageToast | null>();
 
   const [status, setStatus] = useState<'off' | 'submitting' | 'submitted'>('off');
@@ -54,40 +63,79 @@ export const ModalNewRating = ({
 
   useEffect(() => {
     if (status === 'submitting') {
-      createRating(newRating)
-        .then(() => {
-          findAllRatingByService(serviceId).then((response) => {
-            dispatch(setRatings(response));
-          });
-          setModalVisible();
+      if (update) {
+        updateRating(ratingId, {
+          note: newRating.note,
+          comment: newRating.comment,
+          images: newRating.images,
         })
-        .catch(() => {
-          setMessage({
-            type: 'error',
-            title: 'Erro ao Criar Avaliação',
-            text: 'Tente novamente. Se persistir entre em contato conosco',
+          .then(() => {
+            setModalVisible();
+          })
+          .catch(() => {
+            setMessage({
+              type: 'error',
+              title: 'Erro ao Criar Avaliação',
+              text: 'Tente novamente. Se persistir entre em contato conosco',
+            });
+          })
+          .finally(() => {
+            setStatus('off');
           });
-        })
-        .finally(() => {
-          setStatus('off');
-        });
+      } else {
+        createRating(newRating)
+          .then(() => {
+            findAllRatingByService(serviceId).then((response) => {
+              dispatch(setRatings(response));
+            });
+            setModalVisible();
+          })
+          .catch(() => {
+            setMessage({
+              type: 'error',
+              title: 'Erro ao Criar Avaliação',
+              text: 'Tente novamente. Se persistir entre em contato conosco',
+            });
+          })
+          .finally(() => {
+            setStatus('off');
+          });
+      }
     }
   }, [status]);
 
   useEffect(() => {
     if (modalVisible) {
-      setMessage({
-        type: 'success',
-        title: 'Serviço encerrado',
-        text: 'Seu serviço foi encerrado com Sucesso!',
-      });
-      setNewRating({
-        comment: '',
-        images: [],
-        note: 1,
-        serviceProvided: { id: serviceId },
-        user: { id: user!.id },
-      });
+      if (update) {
+        findRatingByUserIdAndServiceId(user!.id, serviceId)
+          .then((response) => {
+            let ratingup = response.data as RatingResponse; // aqui é um let
+            setRatingId(ratingup.id);
+            setNewRating({
+              comment: ratingup.comment,
+              images: ratingup.images,
+              note: ratingup.note,
+              serviceProvided: { id: ratingup.serviceProvided.id },
+              user: { id: ratingup.user.id },
+            });
+            console.log('avaliação a atualizar: ' + ratingup.id);
+          })
+          .catch(() => {
+            setMessage({
+              type: 'error',
+              title: 'Avaliação não Encontrada!',
+              text: 'Tente novamente mais tarde. Se persistir entre em contato!',
+            });
+          });
+      } else {
+        setNewRating({
+          comment: '',
+          images: [],
+          note: 1,
+          serviceProvided: { id: serviceId ?? '' },
+          user: { id: user?.id ?? '' },
+        });
+      }
     }
   }, [modalVisible]);
 

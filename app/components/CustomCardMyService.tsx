@@ -4,12 +4,14 @@ import { Card, CardProps, Image, Switch, XStack, Label } from 'tamagui';
 type CustomCardMyServiceProps = CardProps & {
   serviceName: string;
   serviceStatus: string;
+  serviceImage: string;
   toggleStatus: (checked: boolean) => void;
 };
 
 export function CustomCardMyService({
   serviceName,
   serviceStatus,
+  serviceImage,
   toggleStatus,
   ...props
 }: CustomCardMyServiceProps) {
@@ -23,16 +25,20 @@ export function CustomCardMyService({
           marginBottom={6}
           alignItems="center"
           justifyContent="space-around">
-          <Label width={90} htmlFor="notify" size="$2">
+          <Label
+            width={110}
+            htmlFor={serviceStatus.includes('Pending') ? undefined : 'notify'}
+            size="$2">
             {serviceName}
           </Label>
           {serviceStatus.includes('Pending') ? (
-            <FontAwesome name="warning" size={24} />
+            <FontAwesome id="notify" name="warning" size={24} />
           ) : (
             <Switch
               id="notify"
               size="$2"
               style={{ backgroundColor: serviceStatus.includes('Active') ? '#edffe7' : '#ffe3e3' }}
+              defaultChecked={!!serviceStatus.includes('Active')}
               onCheckedChange={toggleStatus}>
               <Switch.Thumb
                 animation="quick"
@@ -55,7 +61,7 @@ export function CustomCardMyService({
               : 'transparent'
           }
           source={{
-            uri: require('../../assets/technology-background.png'),
+            uri: serviceImage ?? require('../../assets/technology-background.png'),
             height: 230,
             width: 190,
           }}

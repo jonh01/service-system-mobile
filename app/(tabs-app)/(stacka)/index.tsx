@@ -1,7 +1,7 @@
 import { FontAwesome6 } from '@expo/vector-icons';
 import { Stack, router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { FlatList, Linking, TouchableOpacity } from 'react-native';
+import { Alert, FlatList, Linking, TouchableOpacity } from 'react-native';
 import Toast from 'react-native-toast-message';
 import { H4, Spinner, useTheme, YStack } from 'tamagui';
 
@@ -11,7 +11,11 @@ import { ModalService } from '~/app/components/ModalService';
 import { OrderCard } from '~/app/components/OrderCard';
 import { TabsContainer } from '~/app/components/TabsContainer';
 import { setLoadingOrders, setOrders } from '~/app/redux/orderSlice';
-import { findAllOrderByUserId, updateOrder } from '~/app/services/ServicesAPI';
+import {
+  exitstsRatingByUserIdAndServiceId,
+  findAllOrderByUserId,
+  updateOrder,
+} from '~/app/services/ServicesAPI';
 import { MessageToast } from '~/app/types/message';
 import { OrderResponse } from '~/app/types/order';
 import { PageRequest } from '~/app/types/page';
@@ -33,6 +37,8 @@ export default function Services() {
   const [modalServiceId, setModalServiceId] = useState('');
   const [modalOrderItem, setModalOrderItem] = useState<OrderResponse>();
   const [modalNewRatingServiceId, setModalNewRatingServiceId] = useState('');
+
+  const [modalNewRatingUpdate, setModalNewRatingUpdate] = useState(false);
 
   const [message, setMessage] = useState<MessageToast | null>();
 
@@ -105,11 +111,12 @@ export default function Services() {
     }
   };
 
-  const closeOrder = (orderId: string) => {
+  const closeOrder = (orderId: string): boolean => {
+    let successUp = false;
     updateOrder(orderId, { endAt: new Date() })
       .then(() => {
         onRefresh();
-        setModalNewRating(true);
+        successUp = true;
       })
       .catch(() => {
         setMessage({
@@ -117,7 +124,9 @@ export default function Services() {
           title: 'Erro ao Finalizar Ordem',
           text: 'Tente novamente. Se persistir entre em contato conosco',
         });
+        successUp = false;
       });
+    return successUp;
   };
 
   return (
@@ -140,7 +149,7 @@ export default function Services() {
           data={orders} // alterar
           refreshing={isRefreshing}
           onRefresh={onRefresh}
-          keyExtractor={(service) => service.id.toString()}
+          keyExtractor={(order) => order.id.toString()}
           ListEmptyComponent={
             !loadingOrders ? (
               <YStack ai="center">
@@ -164,7 +173,34 @@ export default function Services() {
               }}
               closeOrder={() => {
                 closeOrder(item.id);
-                setModalNewRatingServiceId(item.serviceProvided.id);
+                exitstsRatingByUserIdAndServiceId(user!.id, item.serviceProvided.id).then(
+                  (response) => {
+                    if (response.data == true) {
+                      Alert.alert(
+                        'Avaliação Já Cadastrada',
+                        'Já existe uma avaliação para esse serviço. Deseja atualizar?',
+                        [
+                          {
+                            text: 'Não',
+                            onPress: () => console.log('Cancel Pressed'),
+                            style: 'cancel',
+                          },
+                          {
+                            text: 'Sim',
+                            onPress: () => {
+                              setModalNewRatingUpdate(true);
+                              setModalNewRatingServiceId(item.serviceProvided.id);
+                              setModalNewRating(true);
+                            },
+                          },
+                        ]
+                      );
+                    } else {
+                      setModalNewRatingServiceId(item.serviceProvided.id);
+                      setModalNewRating(true);
+                    }
+                  }
+                );
               }}
               openChat={() => {
                 Linking.openURL(
@@ -203,6 +239,7 @@ export default function Services() {
         }}
       />
       <ModalNewRating
+        update={modalNewRatingUpdate}
         serviceId={modalNewRatingServiceId}
         modalVisible={modalNewRating}
         setModalVisible={() => {

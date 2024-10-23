@@ -23,15 +23,15 @@ export function CustomCardService({
     <Card elevate size="$1" bordered {...props}>
       <Card.Header>
         <YStack alignItems="center">
-          <Avatar circular size="$10">
-            <Avatar.Image src={userImage}/>
+          <Avatar circular size={serviceImage ? '$6' : '$10'}>
+            <Avatar.Image src={userImage} />
             <Avatar.Fallback delayMs={600} bc="white" />
           </Avatar>
         </YStack>
       </Card.Header>
       <Card.Footer justifyContent="center">
         <YStack
-          backgroundColor="#f5f5f5"
+          backgroundColor="#f5f5f5ea"
           width={172}
           minHeight={80}
           marginBottom={10}

@@ -27,6 +27,15 @@ const servicesSlice = createSlice({
     setLoadingServices: (state) => {
       state.loading = true;
     },
+    setStateUserService: (state, action) => {
+      if (action.payload != null) {
+        state.userServices = state.userServices!.map((service) =>
+          service.id === action.payload.id
+            ? { ...service, status: action.payload.newStatus }
+            : service
+        );
+      }
+    },
     setUserServices: (state, action) => {
       state.loading = false;
       if (action.payload != null) {
@@ -53,6 +62,6 @@ const servicesSlice = createSlice({
   },
 });
 
-export const { setLoadingServices, setUserServices, setServices } = servicesSlice.actions;
+export const { setLoadingServices, setStateUserService, setUserServices, setServices } = servicesSlice.actions;
 
 export default servicesSlice.reducer;

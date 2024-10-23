@@ -147,7 +147,7 @@ export default function Search() {
               animation="bouncy"
               size="$3"
               width={182}
-              minHeight={230}
+              minHeight={240}
               imageW={182}
               scale={0.9}
               hoverStyle={{ scale: 0.925 }}

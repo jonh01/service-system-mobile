@@ -2,6 +2,7 @@ import { FontAwesome } from '@expo/vector-icons';
 import { Tabs, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { FlatList } from 'react-native';
+import Toast from 'react-native-toast-message';
 import {
   Avatar,
   Image,
@@ -12,16 +13,18 @@ import {
   Button,
   Text,
   Spinner,
-  H2,
   H4,
+  useTheme,
 } from 'tamagui';
 
 import { CustomCardMyService } from '../components/CustomCardMyService';
+import { ModalNewService } from '../components/ModalNewService';
 import ProfilePopover from '../components/ProfilePopover';
-import { setLoadingServices, setUserServices } from '../redux/serviceSlice';
+import { setLoadingServices, setStateUserService, setUserServices } from '../redux/serviceSlice';
 import { persistor } from '../redux/store';
 import { SignOut } from '../services/FireBaseAuth';
-import { findAllServiceByUserId, SignOutAPI } from '../services/ServicesAPI';
+import { findAllServiceByUserId, SignOutAPI, updateServiceStatus } from '../services/ServicesAPI';
+import { MessageToast } from '../types/message';
 import { PageRequest } from '../types/page';
 import { useAppDispatch, useAppSelector } from '../types/reduxHooks';
 import { ServiceStatus } from '../types/service';
@@ -30,13 +33,19 @@ import { TabsContainer } from '~/app/components/TabsContainer';
 
 export default function Profile() {
   const router = useRouter();
+  const theme = useTheme();
   const dispatch = useAppDispatch();
 
   const user = useAppSelector((state) => state.auth.user);
   const loading = useAppSelector((state) => state.services.loading);
-  const [error, setError] = useState('');
+  const [message, setMessage] = useState<MessageToast | null>(null);
   const services = useAppSelector((state) => state.services.userServices);
   const pageServices = useAppSelector((state) => state.services.pageUserResponse);
+
+  const [modalNewService, setModalNewService] = useState(false);
+  const [success, setSuccess] = useState(false);
+
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const [pageble, setPageble] = useState<PageRequest>({
     page: 0,
@@ -50,34 +59,71 @@ export default function Profile() {
   });
 
   useEffect(() => {
-    setError('');
-    dispatch(setLoadingServices());
-    findAllServiceByUserId(user?.id!, pageble)
-      .then((response) => {
-        console.log('page:', response);
-        dispatch(setUserServices({ page: response?.page, userServices: response?.userServices }));
-      })
-      .catch((error) => {
-        console.log('error:', error.message);
-        setError(error.message);
-      });
-  }, [pageble]);
+    if (user!.id.length > 0 || (user!.id.length > 0 && success)) {
+      setMessage(null);
+      dispatch(setLoadingServices());
+      findAllServiceByUserId(user?.id!, pageble)
+        .then((response) => {
+          console.log('page:', response);
+          dispatch(setUserServices({ page: response?.page, userServices: response?.userServices }));
+        })
+        .catch((error) => {
+          console.log('error:', error.message);
+          setMessage({
+            type: 'error',
+            title: 'Erro ao Buscar Serviços',
+            text: 'Tente novamente mais tarde. Se persistir entre em contato conosco.',
+          });
+        });
 
-  if (!loading && error !== '') {
-    console.log('Error: ', error);
-  }
+      setIsRefreshing(false);
+    }
+  }, [pageble, success]);
+
+  useEffect(() => {
+    if (message != null)
+      Toast.show({
+        autoHide: true,
+        visibilityTime: 5000,
+        type: message?.type,
+        text1: message?.title,
+        text2: message?.text,
+      });
+  }, [message]);
 
   const onRefresh = () => {
-    setPageble((prev) => ({ ...prev, page: 0 }));
+    if (user!.id.length > 0) {
+      setIsRefreshing(true);
+      setPageble((prev) => ({ ...prev, page: 0 }));
+    }
   };
 
   const fetchMoreData = () => {
-    if (!pageServices?.last && pageServices?.first != pageServices?.last) {
+    if (!pageServices?.last && pageServices?.totalPages != pageble.page! + 1) {
       setPageble((prev) => ({ ...prev, page: pageble.page! + 1 }));
       console.log('deu bom');
     } else {
       console.log('acabou');
     }
+  };
+
+  const toggleStatusService = (serviceId: string, status: boolean) => {
+    updateServiceStatus(serviceId, status ? ServiceStatus.active : ServiceStatus.disabled)
+      .then(() => {
+        dispatch(
+          setStateUserService({
+            id: serviceId,
+            newStatus: status ? ServiceStatus.active : ServiceStatus.disabled,
+          })
+        );
+      })
+      .catch(() => {
+        setMessage({
+          type: 'error',
+          title: 'Erro ao Atualizar Status do Serviço',
+          text: 'Tente novamente mais tarde. Se persistir entre em contato conosco.',
+        });
+      });
   };
 
   return (
@@ -142,20 +188,49 @@ export default function Profile() {
       <FlatList
         style={{ marginTop: 40 }}
         showsVerticalScrollIndicator
-        data={services} // alterar
-        refreshing={loading}
+        data={services}
+        refreshing={isRefreshing}
         onRefresh={onRefresh}
+        numColumns={2}
+        columnWrapperStyle={{
+          justifyContent: 'space-evenly',
+          paddingVertical: 10,
+          backgroundColor: theme.background.name,
+        }}
         keyExtractor={(service) => service.id.toString()}
         ListEmptyComponent={
-          <YStack ai="center">
-            <H4>Você Não Possui Serviços!</H4>
-            <Text> Crie um novo serviço para poder visualiza-lo</Text>
-          </YStack>
+          !loading ? (
+            <YStack ai="center">
+              <H4>Você Não Possui Serviços!</H4>
+              <Text> Crie um novo serviço para poder visualiza-lo</Text>
+            </YStack>
+          ) : null
         }
-        renderItem={({ item }) => <Text>{item.id}</Text>}
+        initialNumToRender={8}
+        renderItem={({ index, item }) => (
+          <CustomCardMyService
+            width={190}
+            height={230}
+            animation="bouncy"
+            scale={0.9}
+            hoverStyle={{ scale: 0.925 }}
+            pressStyle={{ scale: 0.875 }}
+            serviceName={item.name}
+            serviceStatus={item.status}
+            serviceImage={item.image}
+            onPress={() => {
+              console.log('toquei: ');
+            }}
+            toggleStatus={(newStatus) => {
+              toggleStatusService(item.id, newStatus);
+            }}
+          />
+        )}
         onEndReachedThreshold={0.1}
-        onEndReached={fetchMoreData}
-        ListFooterComponent={!pageServices?.empty ? <Spinner size="small" mt={20} /> : null}
+        onEndReached={services != null ? fetchMoreData : null}
+        ListFooterComponent={
+          services && !pageServices?.last ? <Spinner size="small" mt={20} /> : null
+        }
       />
       <Button
         backgroundColor="#016cf7"
@@ -166,9 +241,21 @@ export default function Profile() {
         elevate
         bottom={20}
         right={16}
-        position="absolute">
+        position="absolute"
+        onPress={() => {
+          setModalNewService(true);
+        }}>
         <FontAwesome name="plus" size={24} color="#fff" />
       </Button>
+      <ModalNewService
+        modalVisible={modalNewService}
+        setModalVisible={() => {
+          setModalNewService(!modalNewService);
+        }}
+        success={(success) => {
+          setSuccess(success);
+        }}
+      />
     </TabsContainer>
   );
 }

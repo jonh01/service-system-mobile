@@ -300,6 +300,20 @@ export const findRatingById = async (id: string) => {
   return response;
 };
 
+export const findRatingByUserIdAndServiceId = async (userId: string, serviceId: string) => {
+  const request = `/ratings?userId=${userId}&serviceId=${serviceId}`;
+  const response = await axiosInstance.get(request);
+
+  return response;
+};
+
+export const exitstsRatingByUserIdAndServiceId = async (userId: string, serviceId: string) => {
+  const request = `/ratings/exists?userId=${userId}&serviceId=${serviceId}`;
+  const response = await axiosInstance.get(request);
+
+  return response;
+};
+
 // Services
 
 export const createService = async (service: ServiceProvidedInsert) => {

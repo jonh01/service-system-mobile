@@ -8,7 +8,7 @@ export enum ServiceStatus {
 
 export type ServiceProvidedInsert = {
   name: string;
-  image: string;
+  image?: string;
   description: string;
   localAction: string[];
   user: {
