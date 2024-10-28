@@ -36,7 +36,7 @@ const Main = () => {
             <Stack.Screen name="(stack-auth)" options={{ title: 'Auth' }} />
             <Stack.Screen name="(tabs-app)" options={{ title: 'App' }} />
           </Stack>
-          <Toast />
+          <Toast position="top" topOffset={40} />
         </ThemeProvider>
       </Theme>
     </TamaguiProvider>

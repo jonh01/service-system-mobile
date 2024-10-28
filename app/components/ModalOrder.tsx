@@ -21,7 +21,7 @@ import { updateOrder } from '../services/ServicesAPI';
 import { MessageToast } from '../types/message';
 import { OrderResponse, OrderUpdate } from '../types/order';
 import { useAppDispatch, useAppSelector } from '../types/reduxHooks';
-import { converterData } from '../utils/formatters';
+import { converterData, convertStringForNumber, formatPrice } from '../utils/formatters';
 
 export const ModalOrder = ({
   order,
@@ -34,7 +34,6 @@ export const ModalOrder = ({
   setModalVisible: () => void;
   successAtt: (success: boolean) => void;
 }>) => {
-  const dispatch = useAppDispatch();
   const user = useAppSelector((state) => state.auth.user);
   const [orderUp, setOrderUp] = useState<OrderUpdate>({ price: 0.0 });
   const [dateStart, setDateStart] = useState(new Date());
@@ -158,7 +157,6 @@ export const ModalOrder = ({
   return order ? (
     <Modal animationType="fade" transparent visible={modalVisible} statusBarTranslucent>
       <YStack flex={1} justifyContent="center" alignItems="flex-end" backgroundColor="#00000044">
-        <Toast />
         <YStack
           width="100%"
           height="60%"
@@ -241,9 +239,15 @@ export const ModalOrder = ({
                 />
                 <Label
                   marginVertical={5}
-                  name="Preço"
-                  value={'R$ ' + orderUp.price?.toString()}
-                  keyboardType="number-pad"
+                  name="Preço: R$"
+                  value={formatPrice(orderUp.price ?? 0)}
+                  onChangeText={(value) => {
+                    if (convertStringForNumber(value) < Number.MAX_SAFE_INTEGER - 1000)
+                      setOrderUp((prev) => ({ ...prev, price: convertStringForNumber(value) }));
+
+                    console.log('mudei: ' + value);
+                  }}
+                  keyboardType="numeric"
                   disabled={order?.serviceProvided.user.id !== user?.id || !editable}
                   focusStyle={{
                     borderColor: isValidPrice() ? '#ff0000' : '$borderColor',
@@ -266,6 +270,7 @@ export const ModalOrder = ({
             </Form.Trigger>
           </Form>
         </YStack>
+        <Toast position="top" topOffset={40} />
       </YStack>
     </Modal>
   ) : null;

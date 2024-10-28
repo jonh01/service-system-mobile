@@ -1,7 +1,7 @@
 import { FontAwesome } from '@expo/vector-icons';
 import { Tabs, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { FlatList } from 'react-native';
+import { Alert, FlatList } from 'react-native';
 import Toast from 'react-native-toast-message';
 import {
   Avatar,
@@ -19,6 +19,8 @@ import {
 
 import { CustomCardMyService } from '../components/CustomCardMyService';
 import { ModalNewService } from '../components/ModalNewService';
+import { ModalUpdateService } from '../components/ModalUpdateService';
+import { ModalUpdateUser } from '../components/ModalUpdateUser';
 import ProfilePopover from '../components/ProfilePopover';
 import { setLoadingServices, setStateUserService, setUserServices } from '../redux/serviceSlice';
 import { persistor } from '../redux/store';
@@ -43,7 +45,12 @@ export default function Profile() {
   const pageServices = useAppSelector((state) => state.services.pageUserResponse);
 
   const [modalNewService, setModalNewService] = useState(false);
+  const [modalUpService, setModalUpService] = useState(false);
+  const [modalUserEdit, setModalUserEdit] = useState(false);
+  const [profilePopover, setProfilePopover] = useState(false);
   const [success, setSuccess] = useState(false);
+
+  const [serviceId, setServiceId] = useState('');
 
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -103,7 +110,7 @@ export default function Profile() {
       setPageble((prev) => ({ ...prev, page: pageble.page! + 1 }));
       console.log('deu bom');
     } else {
-      console.log('acabou');
+      console.log('acabou s');
     }
   };
 
@@ -134,10 +141,15 @@ export default function Profile() {
           headerTitleAlign: 'center',
           headerRight: () => (
             <ProfilePopover
+              open={profilePopover}
+              onOpenChange={() => {
+                setProfilePopover(!profilePopover);
+              }}
               shouldAdapt
               placement="bottom"
               editInfo={() => {
-                console.log('clicou');
+                setProfilePopover(!profilePopover);
+                setModalUserEdit(true);
               }}
               exit={() => {
                 SignOutAPI()
@@ -151,6 +163,7 @@ export default function Profile() {
                       });
                   })
                   .finally(() => {
+                    setProfilePopover(!profilePopover);
                     persistor.purge().catch((error) => {
                       console.log('error delete AsyncStorage: ', error);
                     });
@@ -219,10 +232,17 @@ export default function Profile() {
             serviceStatus={item.status}
             serviceImage={item.image}
             onPress={() => {
-              console.log('toquei: ');
+              setServiceId(item.id);
+              setModalUpService(true);
             }}
             toggleStatus={(newStatus) => {
               toggleStatusService(item.id, newStatus);
+            }}
+            penddingOnpress={() => {
+              Alert.alert(
+                'Serviço Pendente',
+                'O seu serviço está pendente de avaliação. Em casos de problemas, entraremos em contato.'
+              );
             }}
           />
         )}
@@ -254,6 +274,24 @@ export default function Profile() {
         }}
         success={(success) => {
           setSuccess(success);
+        }}
+      />
+      <ModalUpdateService
+        serviceId={serviceId}
+        success={(successService) => {
+          if (successService) {
+            onRefresh();
+          }
+        }}
+        modalVisible={modalUpService}
+        setModalVisible={() => {
+          setModalUpService(!modalUpService);
+        }}
+      />
+      <ModalUpdateUser
+        modalVisible={modalUserEdit}
+        setModalVisible={() => {
+          setModalUserEdit(!modalUserEdit);
         }}
       />
     </TabsContainer>

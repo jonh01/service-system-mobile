@@ -1,25 +1,14 @@
 import { FontAwesome, FontAwesome6 } from '@expo/vector-icons';
-import { SetStateAction, useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FlatList, TouchableOpacity } from 'react-native';
-import {
-  Adapt,
-  Button,
-  debounce,
-  H4,
-  Popover,
-  PopoverProps,
-  RadioGroup,
-  SelectSeparator,
-  Spinner,
-  XStack,
-  YStack,
-} from 'tamagui';
+import Toast from 'react-native-toast-message';
+import { Adapt, Button, H4, Popover, PopoverProps, RadioGroup, Spinner, YStack } from 'tamagui';
 
-import { RadioGroupItemWithLabel } from './RadioGroupItemWithLabel';
 import { Label } from './Label';
+import { RadioGroupItemWithLabel } from './RadioGroupItemWithLabel';
 import { setCategories, setLoadingCategory } from '../redux/categorySlice';
 import { findAllCategory } from '../services/ServicesAPI';
-import { CategoryResponse } from '../types/category';
+import { MessageToast } from '../types/message';
 import { PageRequest } from '../types/page';
 import { useAppDispatch, useAppSelector } from '../types/reduxHooks';
 
@@ -34,7 +23,7 @@ export default function SearchPopover({ shouldAdapt, exit, ...props }: SearchPop
   const loadingCategories = useAppSelector((state) => state.categories.loading);
   const categories = useAppSelector((state) => state.categories.categories);
   const pageCategories = useAppSelector((state) => state.categories.pageResponse);
-  const [error, setError] = useState('');
+  const [message, setMessage] = useState<MessageToast | null>();
 
   const [value, setValue] = useState('todas');
   const [local, setLocal] = useState('');
@@ -50,7 +39,7 @@ export default function SearchPopover({ shouldAdapt, exit, ...props }: SearchPop
   });
 
   useEffect(() => {
-    setError('');
+    setMessage(null);
     dispatch(setLoadingCategory());
     findAllCategory(categoryPageble)
       .then((response) => {
@@ -59,7 +48,11 @@ export default function SearchPopover({ shouldAdapt, exit, ...props }: SearchPop
       })
       .catch((error) => {
         console.log('error:', error.message);
-        setError(error.message);
+        setMessage({
+          type: 'error',
+          title: 'Nenhuma Categoria encontrada.',
+          text: 'Tente novamente.',
+        });
       });
   }, [categoryPageble]);
 
@@ -71,6 +64,18 @@ export default function SearchPopover({ shouldAdapt, exit, ...props }: SearchPop
       console.log('acabou');
     }
   };
+
+  useEffect(() => {
+    if (message) {
+      Toast.show({
+        autoHide: true,
+        visibilityTime: 5000,
+        type: message.type,
+        text1: message?.title,
+        text2: message?.text,
+      });
+    }
+  }, [message]);
 
   return (
     <Popover size="$5" allowFlip {...props}>
@@ -93,6 +98,7 @@ export default function SearchPopover({ shouldAdapt, exit, ...props }: SearchPop
           <Popover.Sheet modal dismissOnSnapToBottom snapPoints={[64]}>
             <Popover.Sheet.Frame padding="$4">
               <Adapt.Contents />
+              <Toast position="top" topOffset={40} />
             </Popover.Sheet.Frame>
             <Popover.Sheet.Overlay
               animation="lazy"

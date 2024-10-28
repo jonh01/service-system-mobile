@@ -20,7 +20,7 @@ import { Label } from './Label';
 import { LocalComponent } from './LocalComponent';
 import { createService } from '../services/ServicesAPI';
 import { MessageToast } from '../types/message';
-import { useAppDispatch, useAppSelector } from '../types/reduxHooks';
+import { useAppSelector } from '../types/reduxHooks';
 import { ServiceProvidedInsert } from '../types/service';
 
 export const ModalNewService = ({
@@ -32,7 +32,6 @@ export const ModalNewService = ({
   setModalVisible: () => void;
   success: (success: boolean) => void;
 }>) => {
-  const dispatch = useAppDispatch();
   const user = useAppSelector((state) => state.auth.user);
 
   const [newService, setNewService] = useState<ServiceProvidedInsert>({
@@ -106,6 +105,12 @@ export const ModalNewService = ({
     )
       return false;
     else return true;
+  };
+
+  const addNewLocal = () => {
+    if (!newService.localAction.includes(local)) {
+      setNewService((prev) => ({ ...prev, localAction: [...prev.localAction, local] }));
+    }
   };
 
   return newService ? (
@@ -184,6 +189,7 @@ export const ModalNewService = ({
                   />
                 </XStack>
                 <CategorySelect
+                  defaultValue={newService.category.id}
                   selected={(value) => {
                     console.log('mudei para: ' + value);
                     setNewService((prev) => ({ ...prev, category: { id: value } }));
@@ -201,8 +207,7 @@ export const ModalNewService = ({
                   }}
                   onSubmitEditing={() => {
                     if (newService.localAction[0] === '') newService.localAction.pop();
-
-                    newService.localAction.push(local);
+                    addNewLocal();
                     setLocal('');
                   }}
                   focusStyle={{
@@ -269,6 +274,7 @@ export const ModalNewService = ({
             </Form.Trigger>
           </Form>
         </YStack>
+        <Toast position="top" topOffset={40} />
       </YStack>
     </Modal>
   ) : null;

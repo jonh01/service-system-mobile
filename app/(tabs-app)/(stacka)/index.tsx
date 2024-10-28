@@ -93,7 +93,7 @@ export default function Services() {
         text2: message?.text,
       });
     }
-  }, [setMessage]);
+  }, [message]);
 
   const onRefresh = () => {
     if (user!.id.length > 0) {

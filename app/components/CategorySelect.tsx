@@ -10,17 +10,18 @@ import { PageRequest } from '../types/page';
 import { useAppDispatch, useAppSelector } from '../types/reduxHooks';
 
 type CategorySelectProps = SelectProps & {
+  defaultValue: string;
   selected: (selected: string) => void;
 };
 
-export function CategorySelect({ selected, ...props }: CategorySelectProps) {
+export function CategorySelect({ defaultValue, selected, ...props }: CategorySelectProps) {
   const dispatch = useAppDispatch();
   const loadingCategories = useAppSelector((state) => state.categories.loading);
   const categories = useAppSelector((state) => state.categories.categories);
   const pageCategories = useAppSelector((state) => state.categories.pageResponse);
   const [message, setMessage] = useState<MessageToast | null>();
 
-  const [val, setVal] = useState('');
+  const [val, setVal] = useState(defaultValue);
   const [categoryPageble, setCategoryPageble] = useState<PageRequest>({
     page: 0,
     size: 8,
@@ -31,6 +32,10 @@ export function CategorySelect({ selected, ...props }: CategorySelectProps) {
       },
     ],
   });
+
+  useEffect(() => {
+    if (defaultValue === '') setVal(defaultValue);
+  }, [defaultValue]);
 
   useEffect(() => {
     dispatch(setLoadingCategory());
@@ -98,10 +103,10 @@ export function CategorySelect({ selected, ...props }: CategorySelectProps) {
             stiffness: 250,
           }}>
           <Sheet.Frame backgroundColor="#fff">
-            <Toast />
             <Sheet.ScrollView>
               <Adapt.Contents />
             </Sheet.ScrollView>
+            <Toast position="top" topOffset={40} />
           </Sheet.Frame>
           <Sheet.Overlay animation="lazy" enterStyle={{ opacity: 0 }} exitStyle={{ opacity: 0 }} />
         </Sheet>

@@ -341,6 +341,7 @@ export const ModalService = ({
             />
           </YStack>
         </YStack>
+        <Toast position="top" topOffset={40} />
       </YStack>
     </Modal>
   ) : null;

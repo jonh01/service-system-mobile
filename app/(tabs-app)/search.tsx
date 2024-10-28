@@ -1,6 +1,7 @@
 import { Tabs } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { FlatList } from 'react-native';
+import Toast from 'react-native-toast-message';
 import { H4, Spinner, Text, useTheme, YStack } from 'tamagui';
 
 import { CustomCardService } from '../components/CustomCardService';
@@ -9,6 +10,7 @@ import SearchPopover from '../components/SearchPopover';
 import { TabsContainer } from '../components/TabsContainer';
 import { setLoadingServices, setServices } from '../redux/serviceSlice';
 import { findAllService } from '../services/ServicesAPI';
+import { MessageToast } from '../types/message';
 import { PageRequest } from '../types/page';
 import { useAppDispatch, useAppSelector } from '../types/reduxHooks';
 import { ServiceStatus } from '../types/service';
@@ -20,7 +22,7 @@ export default function Search() {
   const theme = useTheme();
 
   const loadingServices = useAppSelector((state) => state.services.loading);
-  const [error, setError] = useState('');
+  const [message, setMessage] = useState<MessageToast | null>();
   const services = useAppSelector((state) => state.services.services);
   const pageServices = useAppSelector((state) => state.services.pageResponse);
 
@@ -46,7 +48,7 @@ export default function Search() {
 
   useEffect(() => {
     if (name.length > 0) {
-      setError('');
+      setMessage(null);
       dispatch(setLoadingServices());
       findAllService(
         ServiceStatus.active,
@@ -61,15 +63,15 @@ export default function Search() {
         })
         .catch((error) => {
           console.log('error:', error.message);
-          setError(error.message);
+          setMessage({
+            type: 'error',
+            title: 'Erro ao Buscar Serviços',
+            text: 'Tente novamente mais tarde. Se persistir entre em contato conosco.',
+          });
         });
       setIsRefreshing(false);
     }
   }, [servicePageble]);
-
-  if (!loadingServices && error !== '') {
-    console.log('Error: ', error);
-  }
 
   const onRefresh = () => {
     if (name.length > 0) {
@@ -86,6 +88,18 @@ export default function Search() {
       console.log('acabou');
     }
   };
+
+  useEffect(() => {
+    if (message) {
+      Toast.show({
+        autoHide: true,
+        visibilityTime: 5000,
+        type: message.type,
+        text1: message?.title,
+        text2: message?.text,
+      });
+    }
+  }, [message]);
 
   return (
     <TabsContainer overflow="hidden" pb={0} marginHorizontal={0}>

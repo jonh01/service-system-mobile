@@ -30,10 +30,11 @@ const ordersSlice = createSlice({
     setUserOrders: (state, action) => {
       state.loading = false;
       if (action.payload != null) {
+        console.log('redux user order: ' + action.payload.ordersUser);
         state.pageUserOrdersResponse = action.payload.page;
         state.userOrders = action.payload.page.first
-          ? action.payload.userOrders
-          : [...state.userOrders!, ...action.payload.userOrders];
+          ? action.payload.ordersUser
+          : [...state.userOrders!, ...action.payload.ordersUser];
       }
     },
     setOrders: (state, action) => {

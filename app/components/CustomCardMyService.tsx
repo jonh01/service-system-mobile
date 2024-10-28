@@ -1,11 +1,12 @@
 import { FontAwesome } from '@expo/vector-icons';
-import { Card, CardProps, Image, Switch, XStack, Label } from 'tamagui';
+import { Card, CardProps, Image, Switch, XStack, Label, Button } from 'tamagui';
 
 type CustomCardMyServiceProps = CardProps & {
   serviceName: string;
   serviceStatus: string;
   serviceImage: string;
   toggleStatus: (checked: boolean) => void;
+  penddingOnpress: () => void;
 };
 
 export function CustomCardMyService({
@@ -13,6 +14,7 @@ export function CustomCardMyService({
   serviceStatus,
   serviceImage,
   toggleStatus,
+  penddingOnpress,
   ...props
 }: CustomCardMyServiceProps) {
   return (
@@ -32,7 +34,12 @@ export function CustomCardMyService({
             {serviceName}
           </Label>
           {serviceStatus.includes('Pending') ? (
-            <FontAwesome id="notify" name="warning" size={24} />
+            <Button
+              size="$3"
+              bc="#fff"
+              onPress={penddingOnpress}
+              icon={<FontAwesome id="notify" name="warning" size={22} />}
+            />
           ) : (
             <Switch
               id="notify"

@@ -1,10 +1,12 @@
 import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
+import Toast from 'react-native-toast-message';
 import { Button, Form, H1, Image, Spinner } from 'tamagui';
 
 import { Label } from '../components/Label';
 import { signIn } from '../redux/authSlice';
 import { SignUpAPI } from '../services/ServicesAPI';
+import { MessageToast } from '../types/message';
 import { useAppDispatch } from '../types/reduxHooks';
 import { formatCPF, formatPhone } from '../utils/formatters';
 
@@ -21,8 +23,10 @@ export default function SignUp() {
   }>();
   const [status, setStatus] = useState<'off' | 'submitting' | 'submitted'>('off');
 
+  const [message, setMessage] = useState<MessageToast | null>();
+
   const [cpf, setCpf] = useState('');
-  const [phone, setPhone] = useState(googlePhone != null ? googlePhone : '');
+  const [phone, setPhone] = useState(googlePhone ?? '');
 
   const cpfRegex = /^\d{3}\.\d{3}\.\d{3}-\d{2}$/;
   const phoneRegex = /^\(\d{2}\)\d{4,5}-\d{4}$/;
@@ -45,12 +49,29 @@ export default function SignUp() {
         })
         .catch((response) => {
           console.log('deu ruim ao criar a conta: ' + response.message);
+          setMessage({
+            type: 'error',
+            title: 'Erro ao criar uma conta',
+            text: 'Tente novamente. Se persistir entre em contato conosco.',
+          });
         })
         .finally(() => {
           setStatus('off');
         });
     }
   }, [status]);
+
+  useEffect(() => {
+    if (message) {
+      Toast.show({
+        autoHide: true,
+        visibilityTime: 5000,
+        type: message.type,
+        text1: message?.title,
+        text2: message?.text,
+      });
+    }
+  }, [message]);
 
   return (
     <Container>

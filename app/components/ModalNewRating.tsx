@@ -1,20 +1,19 @@
 import { FontAwesome } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
-import { Keyboard, Modal, TouchableOpacity } from 'react-native';
+import { Modal, TouchableOpacity } from 'react-native';
 import StarRating from 'react-native-star-rating-widget';
 import Toast from 'react-native-toast-message';
-import { Button, Form, H4, H6, Label, Spinner, TextArea, XStack, YStack } from 'tamagui';
+import { Button, Form, H4, Spinner, TextArea, YStack } from 'tamagui';
 
 import { setRatings } from '../redux/ratingSlice';
 import {
   createRating,
   findAllRatingByService,
-  findRatingById,
   findRatingByUserIdAndServiceId,
   updateRating,
 } from '../services/ServicesAPI';
 import { MessageToast } from '../types/message';
-import { RatingInsert, RatingResponse, RatingUpdate } from '../types/rating';
+import { RatingInsert, RatingResponse } from '../types/rating';
 import { useAppDispatch, useAppSelector } from '../types/reduxHooks';
 
 export const ModalNewRating = ({
@@ -44,22 +43,6 @@ export const ModalNewRating = ({
   const [message, setMessage] = useState<MessageToast | null>();
 
   const [status, setStatus] = useState<'off' | 'submitting' | 'submitted'>('off');
-
-  const [keyboardHeight, setKeyboardHeight] = useState(0);
-
-  useEffect(() => {
-    const showSubscription = Keyboard.addListener('keyboardDidShow', (e) => {
-      setKeyboardHeight(e.endCoordinates.height);
-    });
-    const hideSubscription = Keyboard.addListener('keyboardDidHide', () => {
-      setKeyboardHeight(0);
-    });
-
-    return () => {
-      showSubscription.remove();
-      hideSubscription.remove();
-    };
-  }, []);
 
   useEffect(() => {
     if (status === 'submitting') {
@@ -164,7 +147,6 @@ export const ModalNewRating = ({
   return serviceId && newRating ? (
     <Modal animationType="fade" transparent visible={modalVisible} statusBarTranslucent>
       <YStack flex={1} justifyContent="flex-start" alignItems="center" backgroundColor="#00000044">
-        <Toast />
         <YStack
           width="96%"
           height="46%"
@@ -211,6 +193,7 @@ export const ModalNewRating = ({
             </Form.Trigger>
           </Form>
         </YStack>
+        <Toast position="top" topOffset={40} />
       </YStack>
     </Modal>
   ) : null;

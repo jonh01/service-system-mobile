@@ -30,6 +30,7 @@ export type ServiceProvidedResponse = {
   name: string;
   image: string;
   description: string;
+  status: ServiceStatus;
   localAction: string[];
   user: {
     id: string;
