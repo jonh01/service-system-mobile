@@ -1,7 +1,8 @@
 import { FontAwesome } from '@expo/vector-icons';
 import { Tabs, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Alert, FlatList } from 'react-native';
+import { BannerAd, BannerAdSize, TestIds } from 'react-native-google-mobile-ads';
 import Toast from 'react-native-toast-message';
 import {
   Avatar,
@@ -37,6 +38,9 @@ export default function Profile() {
   const router = useRouter();
   const theme = useTheme();
   const dispatch = useAppDispatch();
+
+  const bannerRef = useRef<BannerAd>(null);
+  const adsBanner = process.env.EXPO_PUBLIC_URL_GOOGLE_ADS_BANNER ?? TestIds.ADAPTIVE_BANNER;
 
   const user = useAppSelector((state) => state.auth.user);
   const loading = useAppSelector((state) => state.services.loading);
@@ -198,6 +202,7 @@ export default function Profile() {
           <Input id="usuEmail" placeholder="Seu E-mail" value={user?.email} ml={20} disabled />
         </YStack>
       </XStack>
+      <BannerAd ref={bannerRef} unitId={adsBanner} size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER} />
       <FlatList
         style={{ marginTop: 40 }}
         showsVerticalScrollIndicator
