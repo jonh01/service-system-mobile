@@ -1,7 +1,8 @@
 import { FontAwesome6 } from '@expo/vector-icons';
 import { Stack, router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Alert, FlatList, Linking, TouchableOpacity } from 'react-native';
+import { BannerAd, BannerAdSize, TestIds } from 'react-native-google-mobile-ads';
 import Toast from 'react-native-toast-message';
 import { H4, Spinner, useTheme, YStack } from 'tamagui';
 
@@ -25,6 +26,10 @@ import { cleanPhone } from '~/app/utils/formatters';
 export default function Services() {
   const theme = useTheme();
   const dispatch = useAppDispatch();
+
+  const bannerRef = useRef<BannerAd>(null);
+  const adsBanner = process.env.EXPO_PUBLIC_URL_GOOGLE_ADS_BANNER ?? TestIds.ADAPTIVE_BANNER;
+
   const user = useAppSelector((state) => state.auth.user);
   const loadingOrders = useAppSelector((state) => state.orders.loading);
   const orders = useAppSelector((state) => state.orders.orders);
@@ -221,6 +226,7 @@ export default function Services() {
           }
         />
       </YStack>
+      <BannerAd ref={bannerRef} unitId={adsBanner} size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER} />
       <ModalService
         serviceId={modalServiceId}
         modalVisible={modalService}
