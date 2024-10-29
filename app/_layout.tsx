@@ -2,9 +2,10 @@ import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native
 import { useFonts } from 'expo-font';
 import { SplashScreen, Stack } from 'expo-router';
 import { useEffect } from 'react';
+import Toast from 'react-native-toast-message';
 import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
-import { TamaguiProvider, Theme } from 'tamagui';
+import { PortalProvider, TamaguiProvider, Theme } from 'tamagui';
 
 import { persistor, store } from './redux/store';
 import { useAppSelector } from './types/reduxHooks';
@@ -28,12 +29,14 @@ const Main = () => {
 
   return (
     <TamaguiProvider config={config}>
-      <Theme name={isThemeDark ? 'dark' : 'light'}>
-        <ThemeProvider value={isThemeDark ? DarkTheme : DefaultTheme}>
-          <Stack screenOptions={{ headerShown: false }}>
+      <Theme name="light">
+        <ThemeProvider value={DefaultTheme}>
+          <Stack screenOptions={{ headerShown: false }} initialRouteName="index">
+            <Stack.Screen name="index" options={{ title: 'Index' }} />
             <Stack.Screen name="(stack-auth)" options={{ title: 'Auth' }} />
             <Stack.Screen name="(tabs-app)" options={{ title: 'App' }} />
           </Stack>
+          <Toast position="top" topOffset={40} />
         </ThemeProvider>
       </Theme>
     </TamaguiProvider>
@@ -44,7 +47,9 @@ export default function RootLayout() {
   return (
     <Provider store={store}>
       <PersistGate loading={null} persistor={persistor}>
-        <Main />
+        <PortalProvider shouldAddRootHost>
+          <Main />
+        </PortalProvider>
       </PersistGate>
     </Provider>
   );

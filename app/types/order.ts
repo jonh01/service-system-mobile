@@ -1,6 +1,7 @@
 export type OrderInsert = {
   description: string;
-  startAt: Date;
+  local?: string;
+  startAt?: Date;
   price: number;
   user: {
     id: string;
@@ -11,6 +12,7 @@ export type OrderInsert = {
 };
 
 export type OrderUpdate = {
+  local?: string;
   startAt?: Date;
   endAt?: Date;
   price?: number;
@@ -19,14 +21,27 @@ export type OrderUpdate = {
 export type OrderResponse = {
   id: string;
   description: string;
+  local: string;
   startAt: Date;
   endAt: Date;
   price: number;
   user: {
     id: string;
+    name: string;
+    image: string;
+    phone: string;
+    email: string;
   };
   serviceProvided: {
     id: string;
+    name: string;
+    user: {
+      id: string;
+      name: string;
+      image: string;
+      phone: string;
+      email: string;
+    };
   };
   createdAt: Date;
 };

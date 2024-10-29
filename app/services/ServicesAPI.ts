@@ -1,14 +1,91 @@
 import axios from 'axios';
+import { router } from 'expo-router';
 
-import { OrderInsert, OrderUpdate } from '../types/order';
-import { PageRequest } from '../types/page';
-import { RatingInsert, RatingUpdate } from '../types/rating';
-import { ServiceProvidedInsert, ServiceProvidedUpdate, ServiceStatus } from '../types/service';
+import { SignOut } from './FireBaseAuth';
+import { persistor, store } from '../redux/store';
+import { CategoryResponse } from '../types/category';
+import { OrderInsert, OrderResponse, OrderUpdate } from '../types/order';
+import { PageRequest, PageResponse } from '../types/page';
+import { RatingInsert, RatingResponse, RatingUpdate } from '../types/rating';
+import {
+  ServiceProvidedInsert,
+  ServiceProvidedSummaryResponse,
+  ServiceProvidedUpdate,
+  ServiceProvidedUserResponse,
+  ServiceStatus,
+} from '../types/service';
 import { UserInsert, UserUpdate } from '../types/user';
 
 const axiosInstance = axios.create({ baseURL: process.env.EXPO_PUBLIC_URL_SERVICE_API });
 
-// definir os cookies
+// definir refresh
+let isRefreshing = false;
+
+axiosInstance.interceptors.response.use(
+  (response) => {
+    return response; // Se a resposta estiver ok, retorna diretamente
+  },
+  async (error) => {
+    const status: number = error.response ? error.response.status : null;
+    const urlRequest: string = error.config.url;
+
+    console.log('log erro 1: ' + status + ' refresh: ' + isRefreshing);
+    if ((status === 401 || status === 403) && !urlRequest.includes('logged')) {
+      const originalRequest = error.config;
+      console.log(urlRequest);
+
+      // Verifica se já estamos atualizando o token
+      if (!isRefreshing) {
+        console.log('log erro 2: ' + status + ' refresh: ' + isRefreshing);
+        isRefreshing = true;
+        try {
+          // Atualiza o token
+          const response = await RefreshTokenAPI();
+
+          // Reenvia a requisição original com o novo token
+          if (response.status === 200) {
+            const responseRefresh = await axiosInstance(originalRequest);
+            return responseRefresh;
+          }
+        } catch (refreshError) {
+          console.log('log erro 3: ' + status + ' refresh: ' + isRefreshing);
+
+          // Acesse diretamente o googleToken do estado do Redux
+          const googleToken = store.getState().auth.googleToken;
+
+          // Se o refresh falhar, desloga o usuário
+          const loginResponse = await SignInAPI(googleToken || '');
+
+          if (loginResponse.status === 200) {
+            console.log('signIn: ' + loginResponse.data);
+            const responseRefresh = await axiosInstance(originalRequest);
+            return responseRefresh;
+          } else return Promise.reject(refreshError);
+        } finally {
+          // Reseta o estado de refresh para permitir novas atualizações no futuro
+          isRefreshing = false;
+        }
+      } else if (status === 403 && isRefreshing) {
+        // sair porque o google token é inválido
+        console.log('log erro 4: ' + status + ' refresh: ' + isRefreshing);
+        SignOut()
+          .then(() => {
+            console.log('SignOut with Google!');
+            persistor.purge().catch((error) => {
+              console.log('error delete AsyncStorage: ', error);
+            });
+            router.replace('/(stack-auth)');
+          })
+          .catch((error) => {
+            console.log('error signOut: ', error);
+          });
+      }
+    }
+    console.log('log erro 5: ' + status + ' refresh: ' + isRefreshing);
+    return Promise.reject(error); // Propaga o erro para outras situações
+  }
+);
+
 // Definir pageble
 
 const PageDefine = (pageble: PageRequest) => {
@@ -20,12 +97,17 @@ const PageDefine = (pageble: PageRequest) => {
   return `page=${pageble.page ? pageble.page : 0}&size=${pageble.size ? pageble.size : 10}${sortString}`;
 };
 
-const ServiceDefine = (name?: string, id?: string) => {
-  if (name && id) return `name=${name}&categoryId=${id}`;
-  else if (name) return `name=${name}`;
-  else if (id) return `categoryId=${id}`;
-
-  return '';
+const ServiceDefine = (local?: string, id?: string) => {
+  if (local && local.length > 0 && id && id.length > 0) {
+    console.log('local1: ' + local + ' category: ' + id);
+    return `local=${local}&categoryId=${id}&`;
+  } else if (local && local.length > 0) {
+    console.log('local2: ' + local + ' category: ' + id);
+    return `local=${local}&`;
+  } else if (id && id.length > 0) {
+    console.log('local3: ' + local + ' category: ' + id);
+    return `categoryId=${id}&`;
+  } else return '';
 };
 
 // Login API
@@ -51,17 +133,37 @@ export const RefreshTokenAPI = async () => {
   return response;
 };
 
+export const LoggedAPI = async () => {
+  const response = await axiosInstance.post('authenticate/logged');
+  return response;
+};
+
 // Category
 
 export const findAllCategory = async (pageble?: PageRequest) => {
+  let response;
   if (pageble) {
     const request = `/categories?${PageDefine(pageble)}`;
-    const response = await axiosInstance.get(request);
-    console.log(axiosInstance);
-    return response;
+    response = await axiosInstance.get(request);
+  } else {
+    response = await axiosInstance.get('/categories');
   }
-  const response = await axiosInstance.get('/categories');
-  return response;
+
+  try {
+    const data = await response.data;
+    const page: PageResponse = {
+      first: data.first,
+      last: data.last,
+      numberOfElements: data.numberOfElements,
+      totalElements: data.totalElements,
+      totalPages: data.totalPages,
+      empty: data.empty,
+    };
+    const categories = data.content as CategoryResponse[];
+    return Promise.resolve({ page, categories });
+  } catch (error: any) {
+    return Promise.reject(error);
+  }
 };
 
 export const findCategoryById = async (id: string) => {
@@ -91,35 +193,97 @@ export const findOrderById = async (id: string) => {
   return response;
 };
 
-export const findAllOrderByUserId = async (
-  id: string,
-  finished: boolean,
-  pageble?: PageRequest
-) => {
+export const findAllOrderByUserId = async (id: string, pageble?: PageRequest) => {
   // buscar todas as ordens do usuário
+  let response;
   if (pageble) {
-    const request = `/orders?userId=${id}&finished=${finished}&${PageDefine(pageble)}`;
-    const response = await axiosInstance.get(request);
-    return response;
+    const request = `/orders?userId=${id}&${PageDefine(pageble)}`;
+    response = await axiosInstance.get(request);
+  } else {
+    const request = `/orders?userId=${id}`;
+    response = await axiosInstance.get(request);
   }
-  const request = `/orders?userId=${id}&finished=${finished}`;
-  const response = await axiosInstance.get(request);
-  return response;
+
+  try {
+    const data = await response.data;
+    const page: PageResponse = {
+      first: data.first,
+      last: data.last,
+      numberOfElements: data.numberOfElements,
+      totalElements: data.totalElements,
+      totalPages: data.totalPages,
+      empty: data.empty,
+    };
+    const orders = data.content as OrderResponse[];
+    return Promise.resolve({ page, orders });
+  } catch (error: any) {
+    return Promise.reject(error);
+  }
 };
 
 export const findAllOrderByServiceUserId = async (id: string, pageble?: PageRequest) => {
   // buscar todas as ordens de todos os serviços que tenha o usuário como prestador deste serviço
+  let response;
   if (pageble) {
     const request = `/orders/allservices?userId=${id}&${PageDefine(pageble)}`;
-    const response = await axiosInstance.get(request);
-    return response;
+    response = await axiosInstance.get(request);
+  } else {
+    const request = `/orders/allservices?userId=${id}`;
+    response = await axiosInstance.get(request);
   }
-  const request = `/orders/allservices?userId=${id}`;
+
+  try {
+    const data = await response.data;
+    const page: PageResponse = {
+      first: data.first,
+      last: data.last,
+      numberOfElements: data.numberOfElements,
+      totalElements: data.totalElements,
+      totalPages: data.totalPages,
+      empty: data.empty,
+    };
+    const ordersUser = data.content as OrderResponse[];
+    return Promise.resolve({ page, ordersUser });
+  } catch (error: any) {
+    return Promise.reject(error);
+  }
+};
+
+export const exitstsOrderByUserIdAndServiceId = async (userId: string, serviceId: string) => {
+  const request = `/orders/exists?userId=${userId}&serviceId=${serviceId}`;
   const response = await axiosInstance.get(request);
+
   return response;
 };
 
 // Rating
+
+export const findAllRatingByService = async (serviceId: string, pageble?: PageRequest) => {
+  let response;
+  if (pageble) {
+    const request = `/services/${serviceId}/ratings?${PageDefine(pageble)}`;
+    response = await axiosInstance.get(request);
+  } else {
+    const request = `/services/${serviceId}/ratings`;
+    response = await axiosInstance.get(request);
+  }
+
+  try {
+    const data = await response.data;
+    const page: PageResponse = {
+      first: data.first,
+      last: data.last,
+      numberOfElements: data.numberOfElements,
+      totalElements: data.totalElements,
+      totalPages: data.totalPages,
+      empty: data.empty,
+    };
+    const ratings = data.content as RatingResponse[];
+    return Promise.resolve({ page, ratings });
+  } catch (error: any) {
+    return Promise.reject(error);
+  }
+};
 
 export const createRating = async (rating: RatingInsert) => {
   const response = await axiosInstance.post('/ratings', rating);
@@ -133,6 +297,20 @@ export const updateRating = async (id: string, rating: RatingUpdate) => {
 
 export const findRatingById = async (id: string) => {
   const response = await axiosInstance.get(`/ratings/${id}`);
+  return response;
+};
+
+export const findRatingByUserIdAndServiceId = async (userId: string, serviceId: string) => {
+  const request = `/ratings?userId=${userId}&serviceId=${serviceId}`;
+  const response = await axiosInstance.get(request);
+
+  return response;
+};
+
+export const exitstsRatingByUserIdAndServiceId = async (userId: string, serviceId: string) => {
+  const request = `/ratings/exists?userId=${userId}&serviceId=${serviceId}`;
+  const response = await axiosInstance.get(request);
+
   return response;
 };
 
@@ -165,31 +343,65 @@ export const findServiceById = async (id: string) => {
 
 export const findAllService = async (
   status: ServiceStatus,
+  name: string,
   pageble?: PageRequest,
-  name?: string,
-  id?: string
+  categoryId?: string,
+  local?: string
 ) => {
   // buscar todos os serviços
+  let response;
   if (pageble) {
-    const request = `/services?${ServiceDefine(name, id)}&status=${status}&${PageDefine(pageble)}`;
-    const response = await axiosInstance.get(request);
-    return response;
+    const request = `/services?${PageDefine(pageble)}&${ServiceDefine(local, categoryId)}name=${name}&status=${status}`;
+    console.log('request: ' + request);
+    response = await axiosInstance.get(request);
+  } else {
+    const request = `/services?${ServiceDefine(local, categoryId)}name=${name}&status=${status}`;
+    response = await axiosInstance.get(request);
   }
-  const request = `/services?${ServiceDefine(name, id)}&status=${status}`;
-  const response = await axiosInstance.get(request);
-  return response;
+
+  try {
+    const data = await response.data;
+    const page: PageResponse = {
+      first: data.first,
+      last: data.last,
+      numberOfElements: data.numberOfElements,
+      totalElements: data.totalElements,
+      totalPages: data.totalPages,
+      empty: data.empty,
+    };
+    const services = data.content as ServiceProvidedSummaryResponse[];
+    return Promise.resolve({ page, services });
+  } catch (error: any) {
+    return Promise.reject(error);
+  }
 };
 
-export const findAllServiceByUserId = async (id: string, pageble?: PageRequest) => {
+export const findAllServiceByUserId = async (userId: string, pageble?: PageRequest) => {
   // buscar todos os serviços de um usuário
+  let response;
   if (pageble) {
-    const request = `/users/${id}/services?${PageDefine(pageble)}`;
-    const response = await axiosInstance.get(request);
-    return response;
+    const request = `/users/${userId}/services?${PageDefine(pageble)}`;
+    response = await axiosInstance.get(request);
+  } else {
+    const request = `/users/${userId}/services`;
+    response = await axiosInstance.get(request);
   }
-  const request = `/users/${id}/services`;
-  const response = await axiosInstance.get(request);
-  return response;
+
+  try {
+    const data = await response.data;
+    const page: PageResponse = {
+      first: data.first,
+      last: data.last,
+      numberOfElements: data.numberOfElements,
+      totalElements: data.totalElements,
+      totalPages: data.totalPages,
+      empty: data.empty,
+    };
+    const userServices = data.content as ServiceProvidedUserResponse[];
+    return Promise.resolve({ page, userServices });
+  } catch (error: any) {
+    return Promise.reject(error);
+  }
 };
 
 // User

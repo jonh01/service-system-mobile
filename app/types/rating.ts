@@ -23,6 +23,8 @@ export type RatingResponse = {
   images: string[];
   user: {
     id: string;
+    name: string;
+    image: string;
   };
   serviceProvided: {
     id: string;

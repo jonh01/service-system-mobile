@@ -1,28 +1,77 @@
 import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
+import Toast from 'react-native-toast-message';
 import { Button, Form, H1, Image, Spinner } from 'tamagui';
 
-import { Label } from '../components/label';
+import { Label } from '../components/Label';
+import { signIn } from '../redux/authSlice';
+import { SignUpAPI } from '../services/ServicesAPI';
+import { MessageToast } from '../types/message';
+import { useAppDispatch } from '../types/reduxHooks';
 import { formatCPF, formatPhone } from '../utils/formatters';
 
 import { Container } from '~/app/components/Container';
 
 export default function SignUp() {
-  const { name, email } = useLocalSearchParams<{ name: string; email: string }>();
+  const dispatch = useAppDispatch();
+  const { name, email, picture, googlePhone, googleToken } = useLocalSearchParams<{
+    googleToken: string;
+    name: string;
+    email: string;
+    picture: string;
+    googlePhone: string;
+  }>();
   const [status, setStatus] = useState<'off' | 'submitting' | 'submitted'>('off');
 
+  const [message, setMessage] = useState<MessageToast | null>();
+
   const [cpf, setCpf] = useState('');
-  const [phone, setPhone] = useState('');
+  const [phone, setPhone] = useState(googlePhone ?? '');
+
+  const cpfRegex = /^\d{3}\.\d{3}\.\d{3}-\d{2}$/;
+  const phoneRegex = /^\(\d{2}\)\d{4,5}-\d{4}$/;
 
   useEffect(() => {
     if (status === 'submitting') {
-      console.log(name + '' + email);
-      const timer = setTimeout(() => setStatus('off'), 2000);
-      return () => {
-        clearTimeout(timer);
-      };
+      SignUpAPI(
+        {
+          name,
+          email,
+          cpf,
+          phone,
+          image: picture,
+        },
+        googleToken
+      )
+        .then((response) => {
+          dispatch(signIn({ user: response.data, googleToken }));
+          console.log('criei a conta: ' + googleToken + ' \n resposta: ' + response.data);
+        })
+        .catch((response) => {
+          console.log('deu ruim ao criar a conta: ' + response.message);
+          setMessage({
+            type: 'error',
+            title: 'Erro ao criar uma conta',
+            text: 'Tente novamente. Se persistir entre em contato conosco.',
+          });
+        })
+        .finally(() => {
+          setStatus('off');
+        });
     }
   }, [status]);
+
+  useEffect(() => {
+    if (message) {
+      Toast.show({
+        autoHide: true,
+        visibilityTime: 5000,
+        type: message.type,
+        text1: message?.title,
+        text2: message?.text,
+      });
+    }
+  }, [message]);
 
   return (
     <Container>
@@ -44,7 +93,12 @@ export default function SignUp() {
           height: 128,
         }}
       />
-      <Form mt="$6" space="$7" onSubmit={() => setStatus('submitting')}>
+      <Form
+        mt="$6"
+        space="$7"
+        onSubmit={() => {
+          cpfRegex.test(cpf) && phoneRegex.test(phone) ? setStatus('submitting') : setStatus('off');
+        }}>
         <Label
           name="Nome:"
           htmlFor="usuName"
@@ -67,8 +121,14 @@ export default function SignUp() {
           id="cpf"
           placeholder="Seu CPF"
           keyboardType="number-pad"
-          value={cpf}
-          onChangeText={(text) => setCpf(formatCPF(text))}
+          borderColor={cpf != '' && !cpfRegex.test(cpf) ? '#ff0000' : '$borderColor'}
+          focusStyle={{
+            borderColor: cpf != '' && !cpfRegex.test(cpf) ? '#ff0000' : '$borderColor',
+          }}
+          defaultValue={cpf}
+          onChangeText={(text) => {
+            setCpf(formatCPF(text));
+          }}
         />
         <Label
           name="Telefone:"
@@ -77,8 +137,14 @@ export default function SignUp() {
           placeholder="Seu Telefone"
           inputMode="tel"
           keyboardType="number-pad"
-          value={phone}
-          onChangeText={(text) => setPhone(formatPhone(text))}
+          borderColor={phone != '' && !phoneRegex.test(phone) ? '#ff0000' : '$borderColor'}
+          focusStyle={{
+            borderColor: phone != '' && !phoneRegex.test(phone) ? '#ff0000' : '$borderColor',
+          }}
+          defaultValue={phone}
+          onChangeText={(text) => {
+            setPhone(formatPhone(text));
+          }}
         />
         <Form.Trigger asChild>
           <Button

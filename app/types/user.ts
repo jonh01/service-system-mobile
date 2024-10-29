@@ -6,7 +6,7 @@ export type UserInsert = {
   cpf: string;
   phone: string;
   image: string;
-  type: typeof typeUser;
+  type?: typeof typeUser;
 };
 
 export type UserUpdate = {

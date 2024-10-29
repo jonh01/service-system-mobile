@@ -6,13 +6,13 @@ import { UserResponse } from '../types/user';
 interface AuthSliceData {
   signed: boolean;
   user: UserResponse | null;
-  token: string | null;
+  googleToken: string | null;
 }
 
 const initialState: AuthSliceData = {
   signed: false,
   user: null,
-  token: null,
+  googleToken: null,
 };
 
 const authSlice = createSlice({
@@ -22,12 +22,12 @@ const authSlice = createSlice({
     setUser: (state, action) => {
       state.user = action.payload;
     },
-    setToken: (state, action) => {
-      state.token = action.payload;
+    setGoogleToken: (state, action) => {
+      state.googleToken = action.payload;
     },
     signIn: (state, action) => {
       state.user = action.payload.user;
-      state.token = action.payload.tokens;
+      state.googleToken = action.payload.googleToken;
       state.signed = true;
     },
   },
@@ -38,6 +38,6 @@ const authSlice = createSlice({
   },
 });
 
-export const { setUser, setToken, signIn } = authSlice.actions;
+export const { setUser, setGoogleToken, signIn } = authSlice.actions;
 
 export default authSlice.reducer;

@@ -13,8 +13,10 @@ web-build/
 expo-env.d.ts
 # tamagui
 .tamagui/
-# firebase/supabase
+# firebase/supabase/ keys
+Keys/
 .env
+google-services.json
 
 ios
 android

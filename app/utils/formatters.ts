@@ -27,3 +27,38 @@ export const formatPhone = (value: string): string => {
 
   return value;
 };
+
+export const convertStringForNumber = (value: string): number => {
+  console.log('1: ' + value);
+  const cleanText = value.replace(',', '');
+  console.log('2: ' + cleanText);
+  const numericValue =
+    parseFloat(cleanText.slice(0, -2) + '.' + cleanText.slice(-2).padEnd(2, '0')) || 0;
+
+  console.log('3: ' + numericValue.toFixed(2));
+  return numericValue;
+};
+
+export const formatPrice = (valor: number): string => {
+  try {
+    let [inteiro, decimal] = valor.toString().split('.');
+    decimal = (decimal || '00').padEnd(2, '0');
+    return `${inteiro},${decimal}`;
+  } catch {
+    return '0.0';
+  }
+};
+
+export const cleanPhone = (value: string): string => {
+  // Remove todos os caracteres não numéricos
+  return value.replace(/\D/g, '');
+};
+
+export const converterData = (dataString: string): string => {
+  const data = new Date(dataString);
+  return data.toLocaleDateString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
+};

@@ -1,24 +1,27 @@
 import {
   XStack,
   Label as LabelTamagui,
-  Input,
   LabelProps as LabelPropsTamagui,
-  InputProps as InputPropsTamagui,
+  ButtonProps as ButtonPropsTamagui,
+  Button,
 } from 'tamagui';
 
-type LabelProps = LabelPropsTamagui &
-  InputPropsTamagui & {
+type DateButtonProps = LabelPropsTamagui &
+  ButtonPropsTamagui & {
     name: string;
+    date: string;
     onChangeText?: (text: string) => void;
   };
 
-export function Label({ name, onChangeText, ...rest }: LabelProps) {
+export function DateButton({ name, date, onChangeText, ...rest }: DateButtonProps) {
   return (
     <XStack ai="center" space="$2" paddingHorizontal="$3">
       <LabelTamagui width={90} {...rest}>
         {name}
       </LabelTamagui>
-      <Input flex={1} focusStyle={{ borderWidth: 3 }} onChangeText={onChangeText} {...rest} />
+      <Button flex={1} {...rest} alignItems="center">
+        {date}
+      </Button>
     </XStack>
   );
 }

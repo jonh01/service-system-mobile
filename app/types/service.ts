@@ -1,4 +1,4 @@
-import { NumReviewsNote, RatingResponse } from './rating';
+import { NumReviewsNote } from './rating';
 
 export enum ServiceStatus {
   active = 'Active',
@@ -8,7 +8,7 @@ export enum ServiceStatus {
 
 export type ServiceProvidedInsert = {
   name: string;
-  image: string;
+  image?: string;
   description: string;
   localAction: string[];
   user: {
@@ -30,13 +30,17 @@ export type ServiceProvidedResponse = {
   name: string;
   image: string;
   description: string;
+  status: ServiceStatus;
   localAction: string[];
   user: {
     id: string;
+    name: string;
+    image: string;
+    phone: string;
   };
-  ratings: RatingResponse[];
   category: {
     id: string;
+    name: string;
   };
   createdAt: string;
   numReviews: number;
@@ -51,10 +55,12 @@ export type ServiceProvidedSummaryResponse = {
   description: string;
   status: ServiceStatus;
   user: {
-    id: string;
+    name: string;
+    image: string;
   };
   category: {
     id: string;
+    name: string;
   };
   numReviews: number;
   sumReviews: number;
