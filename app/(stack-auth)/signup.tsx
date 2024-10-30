@@ -1,4 +1,4 @@
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import Toast from 'react-native-toast-message';
 import { Button, Form, H1, Image, Spinner } from 'tamagui';
@@ -14,6 +14,8 @@ import { Container } from '~/app/components/Container';
 
 export default function SignUp() {
   const dispatch = useAppDispatch();
+  const router = useRouter();
+
   const { name, email, picture, googlePhone, googleToken } = useLocalSearchParams<{
     googleToken: string;
     name: string;
@@ -46,6 +48,7 @@ export default function SignUp() {
         .then((response) => {
           dispatch(signIn({ user: response.data, googleToken }));
           console.log('criei a conta: ' + googleToken + ' \n resposta: ' + response.data);
+          router.replace('/(tabs-app)');
         })
         .catch((response) => {
           console.log('deu ruim ao criar a conta: ' + response.message);

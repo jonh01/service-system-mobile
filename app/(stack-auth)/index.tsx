@@ -9,6 +9,7 @@ import { CustomProgress } from '../components/CustomProgress';
 import { signIn as SignInRedux } from '../redux/authSlice';
 import { SignIn as signInFirebase } from '../services/FireBaseAuth';
 import { SignInAPI } from '../services/ServicesAPI';
+import { MessageToast } from '../types/message';
 import { useAppDispatch } from '../types/reduxHooks';
 
 export default function Home() {
@@ -16,6 +17,8 @@ export default function Home() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const [loading, setLoading] = useState(false);
+
+  const [message, setMessage] = useState<MessageToast | null>();
 
   const handleSignIn = async () => {
     setLoading(true);
@@ -33,15 +36,32 @@ export default function Home() {
             const phone = response.userAuth.user.phoneNumber?.length
               ? response.userAuth.user.phoneNumber
               : '';
-            responseError.message.includes('404')
-              ? router.push(
-                  `/(stack-auth)/signup?googleToken=${response.idToken!}&name=${response.userAuth.user.displayName}&email=${response.userAuth.user.email}&picture=${response.userAuth.user.photoURL}&googlePhone=${phone}`
-                )
-              : console.log('Erro ao fazer login: ' + responseError.message);
+            if (responseError.message.includes('404')){
+              setMessage({
+                type: 'success',
+                title: 'Conectado com sucesso!',
+                text: 'Bem vindo! complete o seu cadastro para poder aproveitar.',
+              });
+              router.push(
+                `/(stack-auth)/signup?googleToken=${response.idToken!}&name=${response.userAuth.user.displayName}&email=${response.userAuth.user.email}&picture=${response.userAuth.user.photoURL}&googlePhone=${phone}`
+              );
+            } else {
+              console.log('Erro ao fazer login: ' + responseError.message);
+              setMessage({
+                type: 'error',
+                title: 'Erro ao Fazer Login',
+                text: 'Tente novamente. Se persistir entre em contato conosco.',
+              });
+            }
           });
       })
       .catch((error) => {
         console.log('error: ', error);
+        setMessage({
+          type: 'error',
+          title: 'Erro ao Fazer Login',
+          text: 'Tente novamente. Se persistir entre em contato conosco.',
+        });
         setLoading(false);
       });
   };

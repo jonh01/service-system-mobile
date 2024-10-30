@@ -28,7 +28,14 @@ export default function Services() {
   const dispatch = useAppDispatch();
 
   const bannerRef = useRef<BannerAd>(null);
-  const adsBanner = process.env.EXPO_PUBLIC_URL_GOOGLE_ADS_BANNER ?? TestIds.ADAPTIVE_BANNER;
+
+  const adsBanner = TestIds.ADAPTIVE_BANNER;
+
+  /*
+    const adsBanner = __DEV__
+      ? TestIds.ADAPTIVE_BANNER
+      : (process.env.EXPO_PUBLIC_URL_GOOGLE_ADS_BANNER ?? ''); // activate something payment options activate
+  */
 
   const user = useAppSelector((state) => state.auth.user);
   const loadingOrders = useAppSelector((state) => state.orders.loading);
@@ -226,7 +233,9 @@ export default function Services() {
           }
         />
       </YStack>
-      <BannerAd ref={bannerRef} unitId={adsBanner} size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER} />
+      <YStack marginVertical={10}>
+        <BannerAd ref={bannerRef} unitId={adsBanner} size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER} />
+      </YStack>
       <ModalService
         serviceId={modalServiceId}
         modalVisible={modalService}
