@@ -50,8 +50,9 @@ export const formatPrice = (valor: number): string => {
 };
 
 export const cleanPhone = (value: string): string => {
-  // Remove todos os caracteres não numéricos
-  return value.replace(/\D/g, '');
+  // Remove todos os caracteres não numéricos e adiciona o DDD
+  let tel = '55' + value;
+  return tel.replace(/\D/g, '');
 };
 
 export const converterData = (dataString: string): string => {

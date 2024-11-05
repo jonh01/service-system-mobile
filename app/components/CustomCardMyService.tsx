@@ -29,7 +29,7 @@ export function CustomCardMyService({
           justifyContent="space-around">
           <Label
             width={110}
-            htmlFor={serviceStatus.includes('Pending') ? undefined : 'notify'}
+            htmlFor={serviceStatus.includes('Pending') ? undefined : serviceName + 'notify'}
             size="$2">
             {serviceName}
           </Label>
@@ -38,11 +38,11 @@ export function CustomCardMyService({
               size="$3"
               bc="#fff"
               onPress={penddingOnpress}
-              icon={<FontAwesome id="notify" name="warning" size={22} />}
+              icon={<FontAwesome id={serviceName + 'notify'} name="warning" size={22} />}
             />
           ) : (
             <Switch
-              id="notify"
+              id={serviceName + 'notify'}
               size="$2"
               style={{ backgroundColor: serviceStatus.includes('Active') ? '#edffe7' : '#ffe3e3' }}
               defaultChecked={!!serviceStatus.includes('Active')}

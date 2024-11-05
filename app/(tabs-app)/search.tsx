@@ -1,6 +1,7 @@
 import { Tabs } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import { FlatList } from 'react-native';
+import { BannerAd, BannerAdSize, TestIds } from 'react-native-google-mobile-ads';
 import Toast from 'react-native-toast-message';
 import { H4, Spinner, Text, useTheme, YStack } from 'tamagui';
 
@@ -16,14 +17,19 @@ import { useAppDispatch, useAppSelector } from '../types/reduxHooks';
 import { ServiceStatus } from '../types/service';
 
 import { ModalService } from '~/app/components/ModalService';
-import { BannerAd, BannerAdSize, TestIds } from 'react-native-google-mobile-ads';
 
 export default function Search() {
   const dispatch = useAppDispatch();
   const theme = useTheme();
 
   const bannerRef = useRef<BannerAd>(null);
-  const adsBanner = process.env.EXPO_PUBLIC_URL_GOOGLE_ADS_BANNER ?? TestIds.ADAPTIVE_BANNER;
+  const adsBanner = TestIds.ADAPTIVE_BANNER;
+
+  /*
+    const adsBanner = __DEV__
+      ? TestIds.ADAPTIVE_BANNER
+      : (process.env.EXPO_PUBLIC_URL_GOOGLE_ADS_BANNER ?? ''); // activate something payment options activate
+  */
 
   const loadingServices = useAppSelector((state) => state.services.loading);
   const [message, setMessage] = useState<MessageToast | null>();
@@ -188,7 +194,9 @@ export default function Search() {
           }
         />
       </YStack>
-      <BannerAd ref={bannerRef} unitId={adsBanner} size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER} />
+      <YStack marginVertical={10}>
+        <BannerAd ref={bannerRef} unitId={adsBanner} size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER} />
+      </YStack>
       <ModalService
         serviceId={modalServiceId}
         modalVisible={modalService}

@@ -1,24 +1,17 @@
 import { FontAwesome6 } from '@expo/vector-icons';
 import { Stack, router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Alert, FlatList, Linking, TouchableOpacity } from 'react-native';
+import { FlatList, Linking, TouchableOpacity } from 'react-native';
 import { BannerAd, BannerAdSize, TestIds } from 'react-native-google-mobile-ads';
 import Toast from 'react-native-toast-message';
 import { H4, Spinner, useTheme, YStack } from 'tamagui';
 
-import { ModalNewRating } from '~/app/components/ModalNewRating';
 import { ModalOrder } from '~/app/components/ModalOrder';
 import { ModalService } from '~/app/components/ModalService';
-import { OrderCard } from '~/app/components/OrderCard';
 import { OrderUserCard } from '~/app/components/OrderUserCard';
 import { TabsContainer } from '~/app/components/TabsContainer';
 import { setLoadingOrders, setUserOrders } from '~/app/redux/orderSlice';
-import {
-  exitstsRatingByUserIdAndServiceId,
-  findAllOrderByServiceUserId,
-  findAllOrderByUserId,
-  updateOrder,
-} from '~/app/services/ServicesAPI';
+import { findAllOrderByServiceUserId } from '~/app/services/ServicesAPI';
 import { MessageToast } from '~/app/types/message';
 import { OrderResponse } from '~/app/types/order';
 import { PageRequest } from '~/app/types/page';
@@ -30,7 +23,13 @@ export default function Search() {
   const dispatch = useAppDispatch();
 
   const bannerRef = useRef<BannerAd>(null);
-  const adsBanner = process.env.EXPO_PUBLIC_URL_GOOGLE_ADS_BANNER ?? TestIds.ADAPTIVE_BANNER;
+  const adsBanner = TestIds.ADAPTIVE_BANNER;
+
+  /*
+    const adsBanner = __DEV__
+      ? TestIds.ADAPTIVE_BANNER
+      : (process.env.EXPO_PUBLIC_URL_GOOGLE_ADS_BANNER ?? ''); // activate something payment options activate
+  */
 
   const user = useAppSelector((state) => state.auth.user);
   const loadingOrders = useAppSelector((state) => state.orders.loading);
@@ -172,7 +171,9 @@ export default function Search() {
           }
         />
       </YStack>
-      <BannerAd ref={bannerRef} unitId={adsBanner} size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER} />
+      <YStack marginVertical={10}>
+        <BannerAd ref={bannerRef} unitId={adsBanner} size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER} />
+      </YStack>
       <ModalService
         serviceId={modalServiceId}
         modalVisible={modalService}

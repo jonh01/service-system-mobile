@@ -1,0 +1,52 @@
+{
+  "cli": {
+    "version": ">= 12.6.2",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_URL_GOOGLE_API_KEY":"535203621204-b5f9lgq4gr6hm1frgqu6i4d1fr80rpbl.apps.googleusercontent.com",
+        "EXPO_PUBLIC_URL_SERVICE_API:":"https://service-system.fly.dev/api",
+        // "EXPO_PUBLIC_URL_SERVICE_API":"http://192.168.1.126:8080/api",
+        "EXPO_PUBLIC_URL_GOOGLE_ADS_BANNER":"ca-app-pub-1574773110001809/8270943154",
+        "GOOGLE_SERVICES_JSON":"./google-services.json"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_URL_GOOGLE_API_KEY":"535203621204-b5f9lgq4gr6hm1frgqu6i4d1fr80rpbl.apps.googleusercontent.com",
+        "EXPO_PUBLIC_URL_SERVICE_API":"https://service-system.fly.dev/api",
+        // "EXPO_PUBLIC_URL_SERVICE_API":"http://192.168.1.126:8080/api",
+        "EXPO_PUBLIC_URL_GOOGLE_ADS_BANNER":"ca-app-pub-1574773110001809/8270943154",
+        "GOOGLE_SERVICES_JSON":"./google-services.json"
+      }
+    },
+    "production": {
+      "autoIncrement": true,
+      "distribution": "store",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_URL_GOOGLE_API_KEY":"535203621204-b5f9lgq4gr6hm1frgqu6i4d1fr80rpbl.apps.googleusercontent.com",
+        "EXPO_PUBLIC_URL_SERVICE_API":"https://service-system.fly.dev/api",
+        // "EXPO_PUBLIC_URL_SERVICE_API":"http://192.168.1.126:8080/api",
+        "EXPO_PUBLIC_URL_GOOGLE_ADS_BANNER":"ca-app-pub-1574773110001809/8270943154",
+        "GOOGLE_SERVICES_JSON":"./google-services.json"
+      }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}
